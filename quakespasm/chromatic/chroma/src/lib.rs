@@ -15,8 +15,8 @@ pub mod client;
 pub use client::capi::*;
 
 pub mod common;
-pub use common::*;
 pub use common::capi::*;
+pub use common::*;
 
 pub mod console;
 pub use console::capi::*;
@@ -67,7 +67,9 @@ pub mod vid;
 pub use vid::capi::*;
 
 pub mod zone;
+pub use zone::capi::*;
 
+use std::ops::Not;
 use std::os::raw::{c_char, c_float, c_int, c_uchar, c_void};
 
 // Common types originally found in q_stdinc.h:
@@ -87,6 +89,45 @@ impl QBoolean {
 impl Default for QBoolean {
     fn default() -> Self {
         Self::default()
+    }
+}
+
+impl From<bool> for QBoolean {
+    #[inline]
+    fn from(b: bool) -> Self {
+        match b {
+            false => QBoolean::False,
+            true => QBoolean::True,
+        }
+    }
+}
+
+impl Into<bool> for QBoolean {
+    fn into(self) -> bool {
+        match self {
+            QBoolean::False => false,
+            QBoolean::True => true,
+        }
+    }
+}
+
+impl Not for QBoolean {
+    type Output = QBoolean;
+
+    fn not(self) -> Self::Output {
+        match self {
+            QBoolean::False => QBoolean::True,
+            QBoolean::True => QBoolean::False,
+        }
+    }
+}
+
+impl PartialEq<bool> for QBoolean {
+    fn eq(&self, other: &bool) -> bool {
+        match self {
+            QBoolean::True => other == &true,
+            QBoolean::False => other == &false,
+        }
     }
 }
 

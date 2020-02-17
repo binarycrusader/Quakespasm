@@ -44,9 +44,8 @@ typedef struct
 	memblock_t	*rover;
 } memzone_t;
 
-void Cache_FreeLow (int new_low_hunk);
-void Cache_FreeHigh (int new_high_hunk);
-
+extern void Cache_FreeLow (int new_low_hunk);
+extern void Cache_FreeHigh (int new_high_hunk);
 
 /*
 ==============================================================================
@@ -63,7 +62,7 @@ all big things are allocated on the hunk.
 ==============================================================================
 */
 
-static memzone_t	*mainzone;
+extern memzone_t *mainzone;
 
 
 /*
@@ -284,30 +283,30 @@ void Z_Print (memzone_t *zone)
 
 //============================================================================
 
-#define	HUNK_SENTINAL	0x1df001ed
+#define	HUNK_SENTINEL	0x1df001ed
 
 #define HUNKNAME_LEN	24
 typedef struct
 {
-	int		sentinal;
+	int		sentinel;
 	int		size;		// including sizeof(hunk_t), -1 = not allocated
 	char	name[HUNKNAME_LEN];
 } hunk_t;
 
-byte	*hunk_base;
-int		hunk_size;
+extern byte *hunk_base;
+extern int hunk_size;
 
-int		hunk_low_used;
-int		hunk_high_used;
+extern int hunk_low_used;
+extern int hunk_high_used;
 
-qboolean	hunk_tempactive;
-int		hunk_tempmark;
+extern qboolean hunk_tempactive;
+extern int hunk_tempmark;
 
 /*
 ==============
 Hunk_Check
 
-Run consistancy and sentinal trahing checks
+Run consistency and sentinel trahing checks
 ==============
 */
 void Hunk_Check (void)
@@ -316,8 +315,8 @@ void Hunk_Check (void)
 
 	for (h = (hunk_t *)hunk_base ; (byte *)h != hunk_base + hunk_low_used ; )
 	{
-		if (h->sentinal != HUNK_SENTINAL)
-			Sys_Error ("Hunk_Check: trahsed sentinal");
+		if (h->sentinel != HUNK_SENTINEL)
+			Sys_Error ("Hunk_Check: trashed sentinel");
 		if (h->size < (int) sizeof(hunk_t) || h->size + (byte *)h - hunk_base > hunk_size)
 			Sys_Error ("Hunk_Check: bad size");
 		h = (hunk_t *)((byte *)h+h->size);
@@ -371,10 +370,10 @@ void Hunk_Print (qboolean all)
 			break;
 
 	//
-	// run consistancy checks
+	// run consistency checks
 	//
-		if (h->sentinal != HUNK_SENTINAL)
-			Sys_Error ("Hunk_Check: trahsed sentinal");
+		if (h->sentinel != HUNK_SENTINEL)
+			Sys_Error ("Hunk_Check: trashed sentinel");
 		if (h->size < (int) sizeof(hunk_t) || h->size + (byte *)h - hunk_base > hunk_size)
 			Sys_Error ("Hunk_Check: bad size");
 
@@ -449,7 +448,7 @@ void *Hunk_AllocName (int size, const char *name)
 	memset (h, 0, size);
 
 	h->size = size;
-	h->sentinal = HUNK_SENTINAL;
+	h->sentinel = HUNK_SENTINEL;
 	q_strlcpy (h->name, name, HUNKNAME_LEN);
 
 	return (void *)(h+1);
@@ -463,11 +462,6 @@ Hunk_Alloc
 void *Hunk_Alloc (int size)
 {
 	return Hunk_AllocName (size, "unknown");
-}
-
-int	Hunk_LowMark (void)
-{
-	return hunk_low_used;
 }
 
 void Hunk_FreeToLowMark (int mark)
@@ -540,7 +534,7 @@ void *Hunk_HighAllocName (int size, const char *name)
 
 	memset (h, 0, size);
 	h->size = size;
-	h->sentinal = HUNK_SENTINAL;
+	h->sentinel = HUNK_SENTINEL;
 	q_strlcpy (h->name, name, HUNKNAME_LEN);
 
 	return (void *)(h+1);
@@ -603,7 +597,7 @@ typedef struct cache_system_s
 
 cache_system_t *Cache_TryAlloc (int size, qboolean nobottom);
 
-cache_system_t	cache_head;
+extern cache_system_t cache_head;
 
 /*
 ===========
@@ -936,26 +930,7 @@ void *Cache_Alloc (cache_user_t *c, int size, const char *name)
 }
 
 //============================================================================
-
-
-static void Memory_InitZone (memzone_t *zone, int size)
-{
-	memblock_t	*block;
-
-// set the entire zone to one free block
-
-	zone->blocklist.next = zone->blocklist.prev = block =
-		(memblock_t *)( (byte *)zone + sizeof(memzone_t) );
-	zone->blocklist.tag = 1;	// in use block
-	zone->blocklist.id = 0;
-	zone->blocklist.size = 0;
-	zone->rover = block;
-
-	block->prev = block->next = &zone->blocklist;
-	block->tag = 0;			// free block
-	block->id = ZONEID;
-	block->size = size - sizeof(memzone_t);
-}
+extern void Memory_InitZone (memzone_t *zone, int size);
 
 /*
 ========================

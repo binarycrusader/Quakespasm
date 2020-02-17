@@ -181,4 +181,14 @@ pub mod capi {
         chat_team = QBoolean::False;
         key_dest = KeydestT::KeyMessage;
     }
+
+    #[no_mangle]
+    pub unsafe fn Con_MessageMode2_f() {
+        if cls.state != CActiveT::Connected || cls.demoplayback == QBoolean::True {
+            return;
+        }
+
+        chat_team = QBoolean::True;
+        key_dest = KeydestT::KeyMessage;
+    }
 }

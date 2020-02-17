@@ -163,14 +163,7 @@ extern void Con_MessageMode_f (void);
 Con_MessageMode2_f
 ================
 */
-static void Con_MessageMode2_f (void)
-{
-	if (cls.state != ca_connected || cls.demoplayback)
-		return;
-	chat_team = true;
-	key_dest = key_message;
-}
-
+extern void Con_MessageMode2_f (void);
 
 /*
 ================
