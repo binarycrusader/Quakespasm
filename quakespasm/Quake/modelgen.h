@@ -49,8 +49,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #define ALIAS_VERSION	6
 
-#define ALIAS_ONSEAM				0x0020
-
 // must match definition in spritegn.h
 #ifndef SYNCTYPE_T
 #define SYNCTYPE_T
@@ -91,8 +89,6 @@ typedef struct dtriangle_s {
 	int					facesfront;
 	int					vertindex[3];
 } dtriangle_t;
-
-#define DT_FACES_FRONT				0x0010
 
 // This mirrors trivert_t in trilib.h, is present so Quake knows how to
 // load this data

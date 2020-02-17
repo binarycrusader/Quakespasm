@@ -111,7 +111,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // a sound with no channel is a local only sound
 #define	SND_VOLUME		(1<<0)	// a byte
 #define	SND_ATTENUATION		(1<<1)	// a byte
-#define	SND_LOOPING		(1<<2)	// a long
 
 #define DEFAULT_SOUND_PACKET_VOLUME		255
 #define DEFAULT_SOUND_PACKET_ATTENUATION	1.0

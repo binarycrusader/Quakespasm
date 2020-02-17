@@ -23,8 +23,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "quakedef.h"
 
-static cvar_t	*cvar_vars;
-static char	cvar_null_string[] = "";
+extern cvar_t	*cvar_vars;
+extern char*	cvar_null_string;
 
 //==============================================================================
 //
@@ -239,133 +239,6 @@ void Cvar_Init (void)
 //  CVAR FUNCTIONS
 //
 //==============================================================================
-
-/*
-============
-Cvar_FindVar
-============
-*/
-cvar_t *Cvar_FindVar (const char *var_name)
-{
-	cvar_t	*var;
-
-	for (var = cvar_vars ; var ; var = var->next)
-	{
-		if (!Q_strcmp(var_name, var->name))
-			return var;
-	}
-
-	return NULL;
-}
-
-cvar_t *Cvar_FindVarAfter (const char *prev_name, unsigned int with_flags)
-{
-	cvar_t	*var;
-
-	if (*prev_name)
-	{
-		var = Cvar_FindVar (prev_name);
-		if (!var)
-			return NULL;
-		var = var->next;
-	}
-	else
-		var = cvar_vars;
-
-	// search for the next cvar matching the needed flags
-	while (var)
-	{
-		if ((var->flags & with_flags) || !with_flags)
-			break;
-		var = var->next;
-	}
-	return var;
-}
-
-/*
-============
-Cvar_LockVar
-============
-*/
-void Cvar_LockVar (const char *var_name)
-{
-	cvar_t	*var = Cvar_FindVar (var_name);
-	if (var)
-		var->flags |= CVAR_LOCKED;
-}
-
-void Cvar_UnlockVar (const char *var_name)
-{
-	cvar_t	*var = Cvar_FindVar (var_name);
-	if (var)
-		var->flags &= ~CVAR_LOCKED;
-}
-
-void Cvar_UnlockAll (void)
-{
-	cvar_t	*var;
-
-	for (var = cvar_vars ; var ; var = var->next)
-	{
-		var->flags &= ~CVAR_LOCKED;
-	}
-}
-
-/*
-============
-Cvar_VariableValue
-============
-*/
-float	Cvar_VariableValue (const char *var_name)
-{
-	cvar_t	*var;
-
-	var = Cvar_FindVar (var_name);
-	if (!var)
-		return 0;
-	return Q_atof (var->string);
-}
-
-
-/*
-============
-Cvar_VariableString
-============
-*/
-const char *Cvar_VariableString (const char *var_name)
-{
-	cvar_t *var;
-
-	var = Cvar_FindVar (var_name);
-	if (!var)
-		return cvar_null_string;
-	return var->string;
-}
-
-
-/*
-============
-Cvar_CompleteVariable
-============
-*/
-const char *Cvar_CompleteVariable (const char *partial)
-{
-	cvar_t	*cvar;
-	int	len;
-
-	len = Q_strlen(partial);
-	if (!len)
-		return NULL;
-
-// check functions
-	for (cvar = cvar_vars ; cvar ; cvar = cvar->next)
-	{
-		if (!Q_strncmp(partial, cvar->name, len))
-			return cvar->name;
-	}
-
-	return NULL;
-}
 
 /*
 ============
@@ -590,21 +463,6 @@ void Cvar_RegisterVariable (cvar_t *variable)
 
 /*
 ============
-Cvar_SetCallback
-
-Set a callback function to the var
-============
-*/
-void Cvar_SetCallback (cvar_t *var, cvarcallback_t func)
-{
-	var->callback = func;
-	if (func)
-		var->flags |= CVAR_CALLBACK;
-	else	var->flags &= ~CVAR_CALLBACK;
-}
-
-/*
-============
 Cvar_Command
 
 Handles variable inspection and changing from the console
@@ -629,24 +487,3 @@ qboolean	Cvar_Command (void)
 	Cvar_Set (v->name, Cmd_Argv(1));
 	return true;
 }
-
-
-/*
-============
-Cvar_WriteVariables
-
-Writes lines containing "set variable value" for all variables
-with the archive flag set to true.
-============
-*/
-void Cvar_WriteVariables (FILE *f)
-{
-	cvar_t	*var;
-
-	for (var = cvar_vars ; var ; var = var->next)
-	{
-		if (var->flags & CVAR_ARCHIVE)
-			fprintf (f, "%s \"%s\"\n", var->name, var->string);
-	}
-}
-

@@ -29,11 +29,6 @@ void SCR_Init (void);
 void SCR_LoadPics (void);
 
 void SCR_UpdateScreen (void);
-
-
-void SCR_SizeUp (void);
-void SCR_SizeDown (void);
-void SCR_BringDownConsole (void);
 void SCR_CenterPrint (const char *str);
 
 void SCR_BeginLoadingPlaque (void);
@@ -46,7 +41,6 @@ extern	float		scr_conlines;		// lines of console to display
 
 extern	int			sb_lines;
 
-extern	int			clearnotify;	// set to 0 whenever notify text is drawn
 extern	qboolean	scr_disabled_for_loading;
 extern	qboolean	scr_skipupdate;
 

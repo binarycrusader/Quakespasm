@@ -168,10 +168,17 @@ extern	char	*keybindings[MAX_KEYS];
 extern	char	key_lines[CMDLINES][MAXCMDLINE];
 extern	int		edit_line;
 extern	int		key_linepos;
-extern	int		key_insert;
-extern	double		key_blinktime;
+extern	int		key_insert; // insert key toggle (for editing)
+extern	double		key_blinktime; // fudge cursor blinking to make it easier to spot in certain cases
 
 extern	qboolean	chat_team;
+
+extern int		history_line;
+
+extern qboolean consolekeys[MAX_KEYS];	// if true, can't be rebound while in console
+extern qboolean menubound[MAX_KEYS];	// if true, can't be rebound while in menu
+extern qboolean keydown[MAX_KEYS];
+
 
 void Key_Init (void);
 void Key_ClearStates (void);

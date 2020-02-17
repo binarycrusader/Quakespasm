@@ -444,10 +444,6 @@ void R_TimeRefresh_f (void)
 	Con_Printf ("%f seconds (%f fps)\n", time, 128/time);
 }
 
-void D_FlushCaches (void)
-{
-}
-
 static GLuint gl_programs[16];
 static int gl_num_programs;
 

@@ -25,8 +25,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 // refresh.h -- public interface to refresh functions
 
-#define	MAXCLIPPLANES	11
-
 #define	TOP_RANGE		16			// soldier uniform colors
 #define	BOTTOM_RANGE	96
 
@@ -50,9 +48,7 @@ typedef struct entity_s
 {
 	qboolean				forcelink;		// model changed
 
-	int						update_type;
-
-	entity_state_t			baseline;		// to fill in defaults in updates
+    entity_state_t			baseline;		// to fill in defaults in updates
 
 	double					msgtime;		// time of last update
 	vec3_t					msg_origins[2];	// last two updates (0 is newest)
@@ -69,15 +65,6 @@ typedef struct entity_s
 	int						visframe;		// last frame this entity was
 											//  found in an active leaf
 
-	int						dlightframe;	// dynamic lighting
-	int						dlightbits;
-
-// FIXME: could turn these into a union
-	int						trivial_accept;
-	struct mnode_s			*topnode;		// for bmodels, first world node
-											//  that splits bmodel, or NULL if
-											//  not split
-
 	byte					alpha;			//johnfitz -- alpha
 	byte					lerpflags;		//johnfitz -- lerping
 	float					lerpstart;		//johnfitz -- animation lerping
@@ -85,7 +72,6 @@ typedef struct entity_s
 	float					lerpfinish;		//johnfitz -- lerping -- server sent us a more accurate interval, use it instead of 0.1
 	short					previouspose;	//johnfitz -- animation lerping
 	short					currentpose;	//johnfitz -- animation lerping
-//	short					futurepose;		//johnfitz -- animation lerping
 	float					movelerpstart;	//johnfitz -- transform lerping
 	vec3_t					previousorigin;	//johnfitz -- transform lerping
 	vec3_t					currentorigin;	//johnfitz -- transform lerping
@@ -97,51 +83,20 @@ typedef struct entity_s
 typedef struct
 {
 	vrect_t		vrect;				// subwindow in video for refresh
-									// FIXME: not need vrect next field here?
-	vrect_t		aliasvrect;			// scaled Alias version
-	int			vrectright, vrectbottom;	// right & bottom screen coords
-	int			aliasvrectright, aliasvrectbottom;	// scaled Alias versions
-	float		vrectrightedge;			// rightmost right edge we care about,
-										//  for use in edge list
-	float		fvrectx, fvrecty;		// for floating-point compares
-	float		fvrectx_adj, fvrecty_adj; // left and top edges, for clamping
-	int			vrect_x_adj_shift20;	// (vrect.x + 0.5 - epsilon) << 20
-	int			vrectright_adj_shift20;	// (vrectright + 0.5 - epsilon) << 20
-	float		fvrectright_adj, fvrectbottom_adj;
-										// right and bottom edges, for clamping
-	float		fvrectright;			// rightmost edge, for Alias clamping
-	float		fvrectbottom;			// bottommost edge, for Alias clamping
-	float		horizontalFieldOfView;	// at Z = 1.0, this many X is visible
-										// 2.0 = 90 degrees
-	float		xOrigin;			// should probably allways be 0.5
-	float		yOrigin;			// between be around 0.3 to 0.5
-
 	vec3_t		vieworg;
 	vec3_t		viewangles;
-
 	float		fov_x, fov_y;
-
-	int			ambientlight;
 } refdef_t;
-
 
 //
 // refresh
 //
-extern	int		reinit_surfcache;
-
-
 extern	refdef_t	r_refdef;
 extern vec3_t	r_origin, vpn, vright, vup;
 
 
 void R_Init (void);
-void R_InitTextures (void);
-void R_InitEfrags (void);
 void R_RenderView (void);		// must set r_refdef first
-void R_ViewChanged (vrect_t *pvrect, int lineadj, float aspect);
-								// called whenever r_refdef or vid change
-//void R_InitSky (struct texture_s *mt);	// called at level load
 
 void R_CheckEfrags (void); //johnfitz
 void R_AddEfrags (entity_t *ent);
@@ -165,14 +120,7 @@ void R_PushDlights (void);
 //
 // surface cache related
 //
-extern	int		reinit_surfcache;	// if 1, surface cache is currently empty and
 extern qboolean	r_cache_thrash;	// set if thrashing the surface cache
-
-int	D_SurfaceCacheForRes (int width, int height);
-void D_FlushCaches (void);
-void D_DeleteSurfaceCache (void);
-void D_InitCaches (void *buffer, int size);
-void R_SetVrect (vrect_t *pvrect, vrect_t *pvrectin, int lineadj);
 
 #endif	/* _QUAKE_RENDER_H */
 

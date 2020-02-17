@@ -188,9 +188,7 @@ void R_AddEfrags (entity_t *ent)
 
 	R_SplitEntityOnNode (cl.worldmodel->nodes);
 
-	ent->topnode = r_pefragtopnode;
-
-	R_CheckEfrags (); //johnfitz
+    R_CheckEfrags (); //johnfitz
 }
 
 

@@ -1,0 +1,9 @@
+[package]
+name = "chromatic"
+version = "0.1.0"
+authors = ["Shawn Walker-Salas <binarycrusader@gmail.com>"]
+
+[dependencies]
+chroma = { path = "chroma"}
+
+[workspace]

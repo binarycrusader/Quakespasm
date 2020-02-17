@@ -1,0 +1,2 @@
+[build]
+rustflags = ["-Anon-snake-case","-Ctarget-feature=+crt-static","--print=native-static-libs"]

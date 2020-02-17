@@ -54,9 +54,6 @@ typedef struct
 #define	CSHIFT_POWERUP	3
 #define	NUM_CSHIFTS		4
 
-#define	NAME_LENGTH	64
-
-
 //
 // client_state_t should hold all pieces of the client state
 //
@@ -247,14 +244,11 @@ extern	cvar_t	cl_anglespeedkey;
 
 extern	cvar_t	cl_alwaysrun; // QuakeSpasm
 
-extern	cvar_t	cl_autofire;
-
 extern	cvar_t	cl_shownet;
 extern	cvar_t	cl_nolerp;
 
 extern	cvar_t	cfg_unbindall;
 
-extern	cvar_t	cl_pitchdriftspeed;
 extern	cvar_t	lookspring;
 extern	cvar_t	lookstrafe;
 extern	cvar_t	sensitivity;
@@ -294,10 +288,6 @@ void	CL_DecayLights (void);
 void CL_Init (void);
 
 void CL_EstablishConnection (const char *host);
-void CL_Signon1 (void);
-void CL_Signon2 (void);
-void CL_Signon3 (void);
-void CL_Signon4 (void);
 
 void CL_Disconnect (void);
 void CL_Disconnect_f (void);
@@ -351,8 +341,6 @@ void V_StartPitchDrift (void);
 void V_StopPitchDrift (void);
 
 void V_RenderView (void);
-//void V_UpdatePalette (void); //johnfitz
-void V_Register (void);
 void V_ParseDamage (void);
 void V_SetContentsColor (int contents);
 
@@ -369,7 +357,6 @@ extern	cvar_t	chase_active;
 
 void Chase_Init (void);
 void TraceLine (vec3_t start, vec3_t end, vec3_t impact);
-void Chase_UpdateForClient (void);	//johnfitz
 void Chase_UpdateForDrawing (void);	//johnfitz
 
 #endif	/* _CLIENT_H_ */

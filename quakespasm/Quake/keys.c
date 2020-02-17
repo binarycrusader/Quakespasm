@@ -28,22 +28,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #define		HISTORY_FILE_NAME "history.txt"
 
-char		key_lines[CMDLINES][MAXCMDLINE];
-
-int		key_linepos;
-int		key_insert;	//johnfitz -- insert key toggle (for editing)
-double		key_blinktime; //johnfitz -- fudge cursor blinking to make it easier to spot in certain cases
-
-int		edit_line = 0;
-int		history_line = 0;
-
-keydest_t	key_dest;
-
-char		*keybindings[MAX_KEYS];
-qboolean	consolekeys[MAX_KEYS];	// if true, can't be rebound while in console
-qboolean	menubound[MAX_KEYS];	// if true, can't be rebound while in menu
-qboolean	keydown[MAX_KEYS];
-
 typedef struct
 {
 	const char	*name;
@@ -475,9 +459,8 @@ void Char_Console (int key)
 
 //============================================================================
 
-qboolean	chat_team = false;
-static char	chat_buffer[MAXCMDLINE];
-static int	chat_bufferlen = 0;
+extern char chat_buffer[MAXCMDLINE];
+extern int chat_bufferlen;
 
 const char *Key_GetChatBuffer (void)
 {

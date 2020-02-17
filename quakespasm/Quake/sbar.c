@@ -417,7 +417,6 @@ int		fragsort[MAX_SCOREBOARD];
 char		scoreboardtext[MAX_SCOREBOARD][20];
 int		scoreboardtop[MAX_SCOREBOARD];
 int		scoreboardbottom[MAX_SCOREBOARD];
-int		scoreboardcount[MAX_SCOREBOARD];
 int		scoreboardlines;
 
 /*

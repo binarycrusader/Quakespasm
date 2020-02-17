@@ -60,22 +60,6 @@ void TraceLine (vec3_t start, vec3_t end, vec3_t impact)
 
 /*
 ==============
-Chase_UpdateForClient -- johnfitz -- orient client based on camera. called after input
-==============
-*/
-void Chase_UpdateForClient (void)
-{
-	//place camera
-
-	//assign client angles to camera
-
-	//see where camera points
-
-	//adjust client angles to point at the same place
-}
-
-/*
-==============
 Chase_UpdateForDrawing -- johnfitz -- orient camera based on client. called before drawing
 
 TODO: stay at least 8 units away from all walls in this leaf

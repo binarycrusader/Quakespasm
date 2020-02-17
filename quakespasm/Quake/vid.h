@@ -49,21 +49,14 @@ typedef struct
 {
 	pixel_t		*buffer;	// invisible buffer
 	pixel_t		*colormap;	// 256 * VID_GRADES size
-	unsigned short	*colormap16;	// 256 * VID_GRADES size
 	int		fullbright;	// index of first fullbright color
-	int		rowbytes;	// may be > width if displayed in a window
 	int		width;
 	int		height;
-	float		aspect;		// width / height -- < 0 is taller than wide
 	int		numpages;
 	int		recalc_refdef;	// if true, recalc vid-based stuff
-	pixel_t		*conbuffer;
 	int		conrowbytes;
 	int		conwidth;
 	int		conheight;
-	int		maxwarpwidth;
-	int		maxwarpheight;
-	pixel_t		*direct;	// direct drawing to framebuffer, if not NULL
 } viddef_t;
 
 extern	viddef_t	vid;				// global video state
@@ -76,9 +69,6 @@ void	VID_Init (void); //johnfitz -- removed palette from argument list
 
 void	VID_Shutdown (void);
 // Called at shutdown
-
-void	VID_Update (vrect_t *rects);
-// flushes the given rectangles from the view buffer to the screen
 
 void VID_SyncCvars (void);
 

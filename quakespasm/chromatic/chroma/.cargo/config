@@ -1,0 +1,2 @@
+[build]
+rustflags = ["-Ctarget-feature=+crt-static","--print=native-static-libs"]

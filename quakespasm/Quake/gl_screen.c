@@ -71,12 +71,6 @@ console is:
 
 */
 
-
-int			glx, gly, glwidth, glheight;
-
-float		scr_con_current;
-float		scr_conlines;		// lines of console to display
-
 //johnfitz -- new cvars
 cvar_t		scr_menuscale = {"scr_menuscale", "1", CVAR_ARCHIVE};
 cvar_t		scr_sbarscale = {"scr_sbarscale", "1", CVAR_ARCHIVE};
@@ -108,7 +102,6 @@ qpic_t		*scr_net;
 qpic_t		*scr_turtle;
 
 int			clearconsole;
-int			clearnotify;
 
 vrect_t		scr_vrect;
 
@@ -1124,7 +1117,7 @@ void SCR_UpdateScreen (void)
 		M_Draw ();
 	}
 
-	V_UpdateBlend (); //johnfitz -- V_UpdatePalette cleaned up and renamed
+	V_UpdateBlend();
 
 	GLSLGamma_GammaCorrect ();
 

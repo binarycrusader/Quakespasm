@@ -129,15 +129,7 @@ void	Cvar_WriteVariables (FILE *f);
 cvar_t	*Cvar_FindVar (const char *var_name);
 cvar_t	*Cvar_FindVarAfter (const char *prev_name, unsigned int with_flags);
 
-void	Cvar_LockVar (const char *var_name);
-void	Cvar_UnlockVar (const char *var_name);
-void	Cvar_UnlockAll (void);
-
 void	Cvar_Init (void);
-
-const char	*Cvar_CompleteVariable (const char *partial);
-// attempts to match a partial variable name for command line completion
-// returns NULL if nothing fits
 
 #endif	/* __CVAR_H__ */
 

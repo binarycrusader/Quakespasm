@@ -32,69 +32,30 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #endif
 #include "quakedef.h"
 
-int 		con_linewidth;
+#define	CON_TEXTSIZE (1024 * 1024) //ericw -- was 65536. johnfitz -- new default size
+#define	CON_MINSIZE  16384 //johnfitz -- old default, now the minimum size
+#define NUM_CON_TIMES 4
 
-float		con_cursorspeed = 4;
+extern int con_linewidth;
 
-#define		CON_TEXTSIZE (1024 * 1024) //ericw -- was 65536. johnfitz -- new default size
-#define		CON_MINSIZE  16384 //johnfitz -- old default, now the minimum size
+extern float con_cursorspeed;
 
-int		con_buffersize; //johnfitz -- user can now override default
+extern int con_buffersize;      //johnfitz -- user can now override default
 
-qboolean 	con_forcedup;		// because no entities to refresh
+extern int con_current;     // where next message will be printed
 
-int		con_totallines;		// total lines in console scrollback
-int		con_backscroll;		// lines up from bottom to display
-int		con_current;		// where next message will be printed
-int		con_x;				// offset in current line for next print
-char		*con_text = NULL;
+extern int con_x;           // offset in current line for next print
+extern char *con_text;
 
-cvar_t		con_notifytime = {"con_notifytime","3",CVAR_NONE};	//seconds
-cvar_t		con_logcenterprint = {"con_logcenterprint", "1", CVAR_NONE}; //johnfitz
+extern float con_times[NUM_CON_TIMES];	// realtime time the line was generated
+// for transparent notify lines
 
-char		con_lastcenterstring[1024]; //johnfitz
+extern int con_vislines;
 
-#define	NUM_CON_TIMES 4
-float		con_times[NUM_CON_TIMES];	// realtime time the line was generated
-						// for transparent notify lines
+extern qboolean con_debuglog;
 
-int			con_vislines;
-
-qboolean	con_debuglog = false;
-
-qboolean	con_initialized;
-
-
-/*
-================
-Con_Quakebar -- johnfitz -- returns a bar of the desired length, but never wider than the console
-
-includes a newline, unless len >= con_linewidth.
-================
-*/
-const char *Con_Quakebar (int len)
-{
-	static char bar[42];
-	int i;
-
-	len = q_min(len, (int)sizeof(bar) - 2);
-	len = q_min(len, con_linewidth);
-
-	bar[0] = '\35';
-	for (i = 1; i < len - 1; i++)
-		bar[i] = '\36';
-	bar[len-1] = '\37';
-
-	if (len < con_linewidth)
-	{
-		bar[len] = '\n';
-		bar[len+1] = 0;
-	}
-	else
-		bar[len] = 0;
-
-	return bar;
-}
+extern cvar_t con_notifytime;       //seconds
+extern cvar_t con_logcenterprint;
 
 /*
 ================
@@ -132,17 +93,7 @@ void Con_ToggleConsole_f (void)
 	memset (con_times, 0, sizeof(con_times));
 }
 
-/*
-================
-Con_Clear_f
-================
-*/
-static void Con_Clear_f (void)
-{
-	if (con_text)
-		Q_memset (con_text, ' ', con_buffersize); //johnfitz -- con_buffersize replaces CON_TEXTSIZE
-	con_backscroll = 0; //johnfitz -- if console is empty, being scrolled up is confusing
-}
+void Con_Clear_f (void);
 
 /*
 ================
@@ -202,30 +153,10 @@ static void Con_Dump_f (void)
 
 /*
 ================
-Con_ClearNotify
-================
-*/
-void Con_ClearNotify (void)
-{
-	int		i;
-
-	for (i = 0; i < NUM_CON_TIMES; i++)
-		con_times[i] = 0;
-}
-
-
-/*
-================
 Con_MessageMode_f
 ================
 */
-static void Con_MessageMode_f (void)
-{
-	if (cls.state != ca_connected || cls.demoplayback)
-		return;
-	chat_team = false;
-	key_dest = key_message;
-}
+extern void Con_MessageMode_f (void);
 
 /*
 ================
@@ -338,25 +269,7 @@ void Con_Init (void)
 	con_initialized = true;
 }
 
-
-/*
-===============
-Con_Linefeed
-===============
-*/
-static void Con_Linefeed (void)
-{
-	//johnfitz -- improved scrolling
-	if (con_backscroll)
-		con_backscroll++;
-	if (con_backscroll > con_totallines - (glheight>>3) - 1)
-		con_backscroll = con_totallines - (glheight>>3) - 1;
-	//johnfitz
-
-	con_x = 0;
-	con_current++;
-	Q_memset (&con_text[(con_current%con_totallines)*con_linewidth], ' ', con_linewidth);
-}
+void Con_Linefeed (void);
 
 /*
 ================
@@ -454,8 +367,8 @@ static void Con_Print (const char *txt)
 
 // borrowed from uhexen2 by S.A. for new procs, LOG_Init, LOG_Close
 
-static char	logfilename[MAX_OSPATH];	// current logfile name
-static int	log_fd = -1;			// log file descriptor
+extern char	logfilename[MAX_OSPATH];	// current logfile name
+extern int	log_fd;			// log file descriptor
 
 /*
 ================
@@ -1094,9 +1007,7 @@ void Con_DrawNotify (void)
 			continue;
 		text = con_text + (i % con_totallines)*con_linewidth;
 
-		clearnotify = 0;
-
-		for (x = 0; x < con_linewidth; x++)
+        for (x = 0; x < con_linewidth; x++)
 			Draw_Character ((x+1)<<3, v, text[x]);
 
 		v += 8;
@@ -1106,9 +1017,8 @@ void Con_DrawNotify (void)
 
 	if (key_dest == key_message)
 	{
-		clearnotify = 0;
 
-		if (chat_team)
+        if (chat_team)
 		{
 			Draw_String (8, v, "say_team:");
 			x = 11;

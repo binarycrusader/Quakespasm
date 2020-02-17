@@ -1,0 +1,17 @@
+[package]
+name = "chroma"
+version = "0.1.0"
+authors = ["Shawn Walker-Salas <binarycrusader@gmail.com>"]
+
+[lib]
+crate-type = ["staticlib", "rlib"]
+
+[dependencies]
+bitflags = "1.0"
+gl = "0.14"
+libc = "0.2"
+num = "0.2"
+
+[dependencies.sdl2]
+version = "0.32"
+git = "https://github.com/AngryLawyer/rust-sdl2"

@@ -48,19 +48,7 @@ cvar_t	m_side = {"m_side","0.8", CVAR_ARCHIVE};
 cvar_t	cl_maxpitch = {"cl_maxpitch", "90", CVAR_ARCHIVE}; //johnfitz -- variable pitch clamping
 cvar_t	cl_minpitch = {"cl_minpitch", "-90", CVAR_ARCHIVE}; //johnfitz -- variable pitch clamping
 
-client_static_t	cls;
-client_state_t	cl;
 // FIXME: put these on hunk?
-entity_t		cl_static_entities[MAX_STATIC_ENTITIES];
-lightstyle_t	cl_lightstyle[MAX_LIGHTSTYLES];
-dlight_t		cl_dlights[MAX_DLIGHTS];
-
-entity_t		*cl_entities; //johnfitz -- was a static array, now on hunk
-int				cl_max_edicts; //johnfitz -- only changes when new map loads
-
-int				cl_numvisedicts;
-entity_t		*cl_visedicts[MAX_VISEDICTS];
-
 extern cvar_t	r_lerpmodels, r_lerpmove; //johnfitz
 
 /*
