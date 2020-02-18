@@ -106,6 +106,7 @@ pub mod capi {
     use super::{CVarCallbackT, CVarFlags, CVarT};
     use libc::{fileno, get_osfhandle, FILE};
     use std::os::windows::io::FromRawHandle;
+    use std::os::windows::io::IntoRawHandle;
     use std::os::windows::raw::HANDLE;
     use std::{
         ffi::CStr,
@@ -240,5 +241,7 @@ pub mod capi {
 
             var = (&*var).next;
         }
+
+        file.into_raw_handle(); // don't close 'f' on drop()
     }
 }

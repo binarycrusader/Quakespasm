@@ -28,7 +28,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
 extern int con_totallines;  // total lines in console scrollback
 extern int con_backscroll;  // lines up from bottom to display
-extern	qboolean con_forcedup;	// because no entities to refresh
+extern qboolean con_forcedup;	// because no entities to refresh
 extern qboolean con_initialized;
 
 extern char con_lastcenterstring[]; //johnfitz
@@ -45,11 +45,6 @@ void Con_SafePrintf (const char *fmt, ...) FUNC_PRINTF(1,2);
 void Con_DrawNotify (void);
 void Con_ClearNotify (void);
 void Con_ToggleConsole_f (void);
-
-void Con_NotifyBox (const char *text);	// during startup for sound / cd warnings
-
-void Con_Show (void);
-void Con_Hide (void);
 
 const char *Con_Quakebar (int len);
 void Con_TabComplete (void);

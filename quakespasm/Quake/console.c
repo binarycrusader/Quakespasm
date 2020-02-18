@@ -62,8 +62,6 @@ extern cvar_t con_logcenterprint;
 Con_ToggleConsole_f
 ================
 */
-extern int history_line; //johnfitz
-
 void Con_ToggleConsole_f (void)
 {
 	if (key_dest == key_console/* || (key_dest == key_game && con_forcedup)*/)
@@ -362,20 +360,6 @@ static void Con_Print (const char *txt)
 
 extern char	logfilename[MAX_OSPATH];	// current logfile name
 extern int	log_fd;			// log file descriptor
-
-/*
-================
-Con_DebugLog
-================
-*/
-void Con_DebugLog(const char *msg)
-{
-	if (log_fd == -1)
-		return;
-
-	write(log_fd, msg, strlen(msg));
-}
-
 
 /*
 ================
@@ -1135,46 +1119,6 @@ void Con_DrawConsole (int lines, qboolean drawinput)
 		Draw_Character ((con_linewidth - strlen(ver) + x + 2)<<3, y, ver[x] /*+ 128*/);
 }
 
-
-/*
-==================
-Con_NotifyBox
-==================
-*/
-void Con_NotifyBox (const char *text)
-{
-	double		t1, t2;
-	int		lastkey, lastchar;
-
-// during startup for sound / cd warnings
-	Con_Printf ("\n\n%s", Con_Quakebar(40)); //johnfitz
-	Con_Printf ("%s", text);
-	Con_Printf ("Press a key.\n");
-	Con_Printf ("%s", Con_Quakebar(40)); //johnfitz
-
-	IN_Deactivate(modestate == MS_WINDOWED);
-	key_dest = key_console;
-
-	Key_BeginInputGrab ();
-	do
-	{
-		t1 = Sys_DoubleTime ();
-		SCR_UpdateScreen ();
-		Sys_SendKeyEvents ();
-		Key_GetGrabbedInput (&lastkey, &lastchar);
-		Sys_Sleep (16);
-		t2 = Sys_DoubleTime ();
-		realtime += t2-t1;		// make the cursor blink
-	} while (lastkey == -1 && lastchar == -1);
-	Key_EndInputGrab ();
-
-	Con_Printf ("\n");
-	IN_Activate();
-	key_dest = key_game;
-	realtime = 0;		// put the cursor back to invisible
-}
-
-
 void LOG_Init (quakeparms_t *parms)
 {
 	time_t	inittime;
@@ -1200,12 +1144,3 @@ void LOG_Init (quakeparms_t *parms)
 	Con_DebugLog (va("LOG started on: %s \n", session));
 
 }
-
-void LOG_Close (void)
-{
-	if (log_fd == -1)
-		return;
-	close (log_fd);
-	log_fd = -1;
-}
-

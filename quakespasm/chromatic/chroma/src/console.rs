@@ -33,8 +33,14 @@ pub mod capi {
     use client::CActiveT;
     use cvar::{CVarFlags, CVarT};
     use keys::KeydestT;
+    use std::os::windows::io::FromRawHandle;
+    use std::os::windows::io::IntoRawHandle;
+    use std::os::windows::raw::HANDLE;
     use std::{
         cmp::min,
+        ffi::CStr,
+        fs::File,
+        io::Write,
         os::raw::{c_char, c_float, c_int},
     };
     use {chat_team, cls, glheight, key_dest, QBoolean, MAX_OSPATH};
@@ -151,6 +157,26 @@ pub mod capi {
     }
 
     #[no_mangle]
+    pub unsafe fn Con_DebugLog(msg: *const c_char) {
+        if log_fd == -1 {
+            return;
+        }
+
+        // It would probably be faster to simply call libc::write here; but long-term, the hope is
+        // to use a native rust File object instead, so this is written closer to that.
+        let h = libc::get_osfhandle(log_fd) as HANDLE;
+        let mut file = File::from_raw_handle(h);
+
+        let logmsg = CStr::from_ptr(msg);
+        if let Err(_e) = file.write(logmsg.to_bytes()) {
+            eprintln!("ConDebugLog failed: {}!", _e);
+            return;
+        }
+
+        file.into_raw_handle(); // don't close the fd on drop()
+    }
+
+    #[no_mangle]
     pub unsafe fn Con_Linefeed() {
         if con_backscroll != 0 {
             con_backscroll += 1
@@ -190,5 +216,13 @@ pub mod capi {
 
         chat_team = QBoolean::True;
         key_dest = KeydestT::KeyMessage;
+    }
+
+    #[no_mangle]
+    pub unsafe fn LOG_Close() {
+        if log_fd != -1 {
+            libc::close(log_fd);
+            log_fd = -1;
+        }
     }
 }
