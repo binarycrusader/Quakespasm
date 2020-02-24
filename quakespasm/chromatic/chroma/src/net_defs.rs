@@ -21,16 +21,15 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-use std::os::raw::{c_short, c_uint, c_uchar, c_double, c_int, c_void, c_char};
-use ::{MAX_DATAGRAM, QBoolean};
-use Byte;
-use net_sys::SysSocketT;
 use net::{NET_MAXMESSAGE, NET_NAMELEN};
+use net_sys::SysSocketT;
 use std::mem::size_of;
+use std::os::raw::{c_char, c_double, c_int, c_short, c_uchar, c_uint, c_void};
+use Byte;
+use {QBoolean, MAX_DATAGRAM};
 
 #[repr(C)]
-pub struct QSockAddr
-{
+pub struct QSockAddr {
     /*
     #if defined(HAVE_SA_LEN)
     unsigned char qsa_len;
@@ -74,58 +73,58 @@ Quake game protocol (documented elsewhere) is used.
 
 
 General notes:
-	game_name is currently always "QUAKE", but is there so this same protocol
-		can be used for future games as well; can you say Quake2?
+    game_name is currently always "QUAKE", but is there so this same protocol
+        can be used for future games as well; can you say Quake2?
 
 CCREQ_CONNECT
-		string	game_name		"QUAKE"
-		byte	net_protocol_version	NET_PROTOCOL_VERSION
+        string	game_name		"QUAKE"
+        byte	net_protocol_version	NET_PROTOCOL_VERSION
 
 CCREQ_SERVER_INFO
-		string	game_name		"QUAKE"
-		byte	net_protocol_version	NET_PROTOCOL_VERSION
+        string	game_name		"QUAKE"
+        byte	net_protocol_version	NET_PROTOCOL_VERSION
 
 CCREQ_PLAYER_INFO
-		byte	player_number
+        byte	player_number
 
 CCREQ_RULE_INFO
-		string	rule
+        string	rule
 
 CCREP_ACCEPT
-		long	port
+        long	port
 
 CCREP_REJECT
-		string	reason
+        string	reason
 
 CCREP_SERVER_INFO
-		string	server_address
-		string	host_name
-		string	level_name
-		byte	current_players
-		byte	max_players
-		byte	protocol_version	NET_PROTOCOL_VERSION
+        string	server_address
+        string	host_name
+        string	level_name
+        byte	current_players
+        byte	max_players
+        byte	protocol_version	NET_PROTOCOL_VERSION
 
 CCREP_PLAYER_INFO
-		byte	player_number
-		string	name
-		long	colors
-		long	frags
-		long	connect_time
-		string	address
+        byte	player_number
+        string	name
+        long	colors
+        long	frags
+        long	connect_time
+        string	address
 
 CCREP_RULE_INFO
-		string	rule
-		string	value
+        string	rule
+        string	value
 
-	note:
-		There are two address forms used above.  The short form is just a
-		port number.  The address that goes along with the port is defined as
-		"whatever address you receive this reponse from".  This lets us use
-		the host OS to solve the problem of multiple host addresses (possibly
-		with no routing between them); the host will use the right address
-		when we reply to the inbound connection request.  The long from is
-		a full address and port in a string.  It is used for returning the
-		address of a server that is not running locally.
+    note:
+        There are two address forms used above.  The short form is just a
+        port number.  The address that goes along with the port is defined as
+        "whatever address you receive this reponse from".  This lets us use
+        the host OS to solve the problem of multiple host addresses (possibly
+        with no routing between them); the host will use the right address
+        when we reply to the inbound connection request.  The long from is
+        a full address and port in a string.  It is used for returning the
+        address of a server that is not running locally.
 
 **/
 
@@ -146,8 +145,7 @@ pub enum ClientConnectMessage {
 
 #[allow(non_snake_case)]
 #[repr(C)]
-pub struct QSocketT
-{
+pub struct QSocketT {
     pub next: *mut QSocketT,
     pub connecttime: c_double,
     pub lastMessageTime: c_double,

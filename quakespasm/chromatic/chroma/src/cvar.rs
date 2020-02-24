@@ -191,13 +191,6 @@ pub mod capi {
         return 0.0;
     }
 
-    /*
-    ============
-    Cvar_SetCallback
-
-    Set a callback function to the var
-    ============
-    */
     #[no_mangle]
     pub unsafe fn Cvar_SetCallback(var: *mut CVarT, func: CVarCallbackT) {
         (&mut *var).callback = func;

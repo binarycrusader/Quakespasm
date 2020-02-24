@@ -26,58 +26,24 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "q_ctype.h"
 #include <errno.h>
 
-static char	*largv[MAX_NUM_ARGVS + 1];
-static char	argvdummy[] = " ";
+extern char *largv[MAX_NUM_ARGVS + 1];
+extern char	argvdummy[];
 
-int		safemode;
+extern cvar_t cmdline;
 
-cvar_t	registered = {"registered","1",CVAR_ROM}; /* set to correct value in COM_CheckRegistered() */
-cvar_t	cmdline = {"cmdline","",CVAR_ROM/*|CVAR_SERVERINFO*/}; /* sending cmdline upon CCREQ_RULE_INFO is evil */
-
-static qboolean		com_modified;	// set true if using non-id files
-
-qboolean		fitzmode;
-
-static void COM_Path_f (void);
+extern qboolean com_modified;	// set true if using non-id files
 
 // if a packfile directory differs from this, it is assumed to be hacked
 #define PAK0_COUNT		339	/* id1/pak0.pak - v1.0x */
 #define PAK0_CRC_V100		13900	/* id1/pak0.pak - v1.00 */
 #define PAK0_CRC_V101		62751	/* id1/pak0.pak - v1.01 */
 #define PAK0_CRC_V106		32981	/* id1/pak0.pak - v1.06 */
-#define PAK0_CRC	(PAK0_CRC_V106)
-#define PAK0_COUNT_V091		308	/* id1/pak0.pak - v0.91/0.92, not supported */
-#define PAK0_CRC_V091		28804	/* id1/pak0.pak - v0.91/0.92, not supported */
-
-char	com_token[1024];
-int		com_argc;
-char	**com_argv;
 
 #define CMDLINE_LENGTH	256		/* johnfitz -- mirrored in cmd.c */
-char	com_cmdline[CMDLINE_LENGTH];
-
-qboolean standard_quake = true, rogue, hipnotic;
+extern char	com_cmdline[CMDLINE_LENGTH];
 
 // this graphic needs to be in the pak file to use registered features
-static unsigned short pop[] =
-{
-	0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,
-	0x0000,0x0000,0x6600,0x0000,0x0000,0x0000,0x6600,0x0000,
-	0x0000,0x0066,0x0000,0x0000,0x0000,0x0000,0x0067,0x0000,
-	0x0000,0x6665,0x0000,0x0000,0x0000,0x0000,0x0065,0x6600,
-	0x0063,0x6561,0x0000,0x0000,0x0000,0x0000,0x0061,0x6563,
-	0x0064,0x6561,0x0000,0x0000,0x0000,0x0000,0x0061,0x6564,
-	0x0064,0x6564,0x0000,0x6469,0x6969,0x6400,0x0064,0x6564,
-	0x0063,0x6568,0x6200,0x0064,0x6864,0x0000,0x6268,0x6563,
-	0x0000,0x6567,0x6963,0x0064,0x6764,0x0063,0x6967,0x6500,
-	0x0000,0x6266,0x6769,0x6a68,0x6768,0x6a69,0x6766,0x6200,
-	0x0000,0x0062,0x6566,0x6666,0x6666,0x6666,0x6562,0x0000,
-	0x0000,0x0000,0x0062,0x6364,0x6664,0x6362,0x0000,0x0000,
-	0x0000,0x0000,0x0000,0x0062,0x6662,0x0000,0x0000,0x0000,
-	0x0000,0x0000,0x0000,0x0061,0x6661,0x0000,0x0000,0x0000,
-	0x0000,0x0000,0x0000,0x0000,0x6500,0x0000,0x0000,0x0000,
-	0x0000,0x0000,0x0000,0x0000,0x6400,0x0000,0x0000,0x0000
-};
+extern unsigned short pop[128];
 
 /*
 
@@ -111,37 +77,6 @@ override an explicit setting on the original command line.
 
 */
 
-//============================================================================
-
-
-// ClearLink is used for new headnodes
-void ClearLink (link_t *l)
-{
-	l->prev = l->next = l;
-}
-
-void RemoveLink (link_t *l)
-{
-	l->next->prev = l->prev;
-	l->prev->next = l->next;
-}
-
-void InsertLinkBefore (link_t *l, link_t *before)
-{
-	l->next = before;
-	l->prev = before->prev;
-	l->prev->next = l;
-	l->next->prev = l;
-}
-
-void InsertLinkAfter (link_t *l, link_t *after)
-{
-	l->next = after->next;
-	l->prev = after;
-	l->prev->next = l;
-	l->next->prev = l;
-}
-
 /*
 ============================================================================
 
@@ -149,27 +84,6 @@ void InsertLinkAfter (link_t *l, link_t *after)
 
 ============================================================================
 */
-
-int q_strcasecmp(const char * s1, const char * s2)
-{
-	const char * p1 = s1;
-	const char * p2 = s2;
-	char c1, c2;
-
-	if (p1 == p2)
-		return 0;
-
-	do
-	{
-		c1 = q_tolower (*p1++);
-		c2 = q_tolower (*p2++);
-		if (c1 == '\0')
-			break;
-	} while (c1 == c2);
-
-	return (int)(c1 - c2);
-}
-
 int q_strncasecmp(const char *s1, const char *s2, size_t n)
 {
 	const char * p1 = s1;
@@ -228,30 +142,6 @@ char *q_strcasestr(const char *haystack, const char *needle)
 		haystack++;
 	}
 	return NULL;	//didn't find it
-}
-
-char *q_strlwr (char *str)
-{
-	char	*c;
-	c = str;
-	while (*c)
-	{
-		*c = q_tolower(*c);
-		c++;
-	}
-	return str;
-}
-
-char *q_strupr (char *str)
-{
-	char	*c;
-	c = str;
-	while (*c)
-	{
-		*c = q_toupper(*c);
-		c++;
-	}
-	return str;
 }
 
 /* platform dependant (v)snprintf function names: */
@@ -320,17 +210,6 @@ void Q_memcpy (void *dest, const void *src, size_t count)
 	else
 		for (i = 0; i < count; i++)
 			((byte *)dest)[i] = ((byte *)src)[i];
-}
-
-int Q_memcmp (const void *m1, const void *m2, size_t count)
-{
-	while(count)
-	{
-		count--;
-		if (((byte *)m1)[count] != ((byte *)m2)[count])
-			return -1;
-	}
-	return 0;
 }
 
 void Q_strcpy (char *dest, const char *src)
@@ -859,14 +738,6 @@ void SZ_Alloc (sizebuf_t *buf, int startsize)
 }
 
 
-void SZ_Free (sizebuf_t *buf)
-{
-//	Z_Free (buf->data);
-//	buf->data = NULL;
-//	buf->maxsize = 0;
-	buf->cursize = 0;
-}
-
 void SZ_Clear (sizebuf_t *buf)
 {
 	buf->cursize = 0;
@@ -988,20 +859,6 @@ const char *COM_FileGetExtension (const char *in)
 
 /*
 ============
-COM_ExtractExtension
-============
-*/
-void COM_ExtractExtension (const char *in, char *out, size_t outsize)
-{
-	const char *ext = COM_FileGetExtension (in);
-	if (! *ext)
-		*out = '\0';
-	else
-		q_strlcpy (out, ext, outsize);
-}
-
-/*
-============
 COM_FileBase
 take 'somedir/otherdir/filename.ext',
 write only 'filename' to the output
@@ -1036,32 +893,6 @@ void COM_FileBase (const char *in, char *out, size_t outsize)
 		out[len] = '\0';
 	}
 }
-
-/*
-==================
-COM_DefaultExtension
-if path doesn't have a .EXT, append extension
-(extension should include the leading ".")
-==================
-*/
-#if 0 /* can be dangerous */
-void COM_DefaultExtension (char *path, const char *extension, size_t len)
-{
-	char	*src;
-
-	if (!*path) return;
-	src = path + strlen(path) - 1;
-
-	while (*src != '/' && *src != '\\' && src != path)
-	{
-		if (*src == '.')
-			return; // it has an extension
-		src--;
-	}
-
-	q_strlcat(path, extension, len);
-}
-#endif
 
 /*
 ==================
@@ -1455,34 +1286,6 @@ static void COM_Path_f (void)
 
 /*
 ============
-COM_WriteFile
-
-The filename will be prefixed by the current game directory
-============
-*/
-void COM_WriteFile (const char *filename, const void *data, int len)
-{
-	int		handle;
-	char	name[MAX_OSPATH];
-
-	Sys_mkdir (com_gamedir); //johnfitz -- if we've switched to a nonexistant gamedir, create it now so we don't crash
-
-	q_snprintf (name, sizeof(name), "%s/%s", com_gamedir, filename);
-
-	handle = Sys_FileOpenWrite (name);
-	if (handle == -1)
-	{
-		Sys_Printf ("COM_WriteFile: failed on %s\n", name);
-		return;
-	}
-
-	Sys_Printf ("COM_WriteFile: %s\n", name);
-	Sys_FileWrite (handle, data, len);
-	Sys_FileClose (handle);
-}
-
-/*
-============
 COM_CreatePath
 ============
 */
@@ -1766,20 +1569,9 @@ byte *COM_LoadHunkFile (const char *path, unsigned int *path_id)
 	return COM_LoadFile (path, LOADFILE_HUNK, path_id);
 }
 
-byte *COM_LoadZoneFile (const char *path, unsigned int *path_id)
-{
-	return COM_LoadFile (path, LOADFILE_ZONE, path_id);
-}
-
 byte *COM_LoadTempFile (const char *path, unsigned int *path_id)
 {
 	return COM_LoadFile (path, LOADFILE_TEMPHUNK, path_id);
-}
-
-void COM_LoadCacheFile (const char *path, struct cache_user_s *cu, unsigned int *path_id)
-{
-	loadcache = cu;
-	COM_LoadFile (path, LOADFILE_CACHE, path_id);
 }
 
 // uses temp hunk if larger than bufsize

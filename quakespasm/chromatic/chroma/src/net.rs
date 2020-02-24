@@ -22,10 +22,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
 /*
-	net.rs
-	quake's interface to the networking layer
-	network functions and data, common to the
-	whole engine
+    net.rs
+    quake's interface to the networking layer
+    network functions and data, common to the
+    whole engine
 */
 
 pub const NET_NAMELEN: usize = 64;

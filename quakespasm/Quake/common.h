@@ -57,7 +57,6 @@ typedef struct sizebuf_s
 } sizebuf_t;
 
 void SZ_Alloc (sizebuf_t *buf, int startsize);
-void SZ_Free (sizebuf_t *buf);
 void SZ_Clear (sizebuf_t *buf);
 void *SZ_GetSpace (sizebuf_t *buf, int length);
 void SZ_Write (sizebuf_t *buf, const void *data, int length);
@@ -74,7 +73,6 @@ typedef struct link_s
 void ClearLink (link_t *l);
 void RemoveLink (link_t *l);
 void InsertLinkBefore (link_t *l, link_t *before);
-void InsertLinkAfter (link_t *l, link_t *after);
 
 // (type *)STRUCT_FROM_LINK(link_t *link, type, member)
 // ent = STRUCT_FROM_LINK(link,entity_t,order)
@@ -123,7 +121,7 @@ float MSG_ReadAngle16 (unsigned int flags); //johnfitz
 
 void Q_memset (void *dest, int fill, size_t count);
 void Q_memcpy (void *dest, const void *src, size_t count);
-int Q_memcmp (const void *m1, const void *m2, size_t count);
+
 void Q_strcpy (char *dest, const char *src);
 void Q_strncpy (char *dest, const char *src, int count);
 int Q_strlen (const char *str);
@@ -144,10 +142,6 @@ extern int q_strncasecmp (const char *s1, const char *s2, size_t n);
 /* locale-insensitive case-insensitive alternative to strstr */
 extern char *q_strcasestr(const char *haystack, const char *needle);
 
-/* locale-insensitive strlwr/upr replacement functions: */
-extern char *q_strlwr (char *str);
-extern char *q_strupr (char *str);
-
 /* snprintf, vsnprintf : always use our versions. */
 extern int q_snprintf (char *str, size_t size, const char *format, ...) FUNC_PRINTF(3,4);
 extern int q_vsnprintf(char *str, size_t size, const char *format, va_list args) FUNC_PRINTF(3,0);
@@ -155,7 +149,6 @@ extern int q_vsnprintf(char *str, size_t size, const char *format, va_list args)
 //============================================================================
 
 extern	char		com_token[1024];
-extern	qboolean	com_eof;
 
 const char *COM_Parse (const char *data);
 
@@ -180,11 +173,7 @@ const char *COM_SkipPath (const char *pathname);
 void COM_StripExtension (const char *in, char *out, size_t outsize);
 void COM_FileBase (const char *in, char *out, size_t outsize);
 void COM_AddExtension (char *path, const char *extension, size_t len);
-#if 0 /* COM_DefaultExtension can be dangerous */
-void COM_DefaultExtension (char *path, const char *extension, size_t len);
-#endif
 const char *COM_FileGetExtension (const char *in); /* doesn't return NULL */
-void COM_ExtractExtension (const char *in, char *out, size_t outsize);
 void COM_CreatePath (char *path);
 
 char *va (const char *format, ...) FUNC_PRINTF(1,2);
@@ -222,13 +211,11 @@ extern searchpath_t *com_searchpaths;
 extern searchpath_t *com_base_searchpaths;
 
 extern int com_filesize;
-struct cache_user_s;
 
 extern	char	com_basedir[MAX_OSPATH];
 extern	char	com_gamedir[MAX_OSPATH];
 extern	int	file_from_pak;	// global indicating that file came from a pak
 
-void COM_WriteFile (const char *filename, const void *data, int len);
 int COM_OpenFile (const char *filename, int *handle, unsigned int *path_id);
 int COM_FOpenFile (const char *filename, FILE **file, unsigned int *path_id);
 qboolean COM_FileExists (const char *filename, unsigned int *path_id);
@@ -245,12 +232,8 @@ byte *COM_LoadStackFile (const char *path, void *buffer, int bufsize,
 byte *COM_LoadTempFile (const char *path, unsigned int *path_id);
 	// allocates the buffer on the temp hunk.
 byte *COM_LoadHunkFile (const char *path, unsigned int *path_id);
-	// allocates the buffer on the hunk.
-byte *COM_LoadZoneFile (const char *path, unsigned int *path_id);
-	// allocates the buffer on the zone.
-void COM_LoadCacheFile (const char *path, struct cache_user_s *cu,
-						unsigned int *path_id);
-	// uses cache mem for allocating the buffer.
+
+// uses cache mem for allocating the buffer.
 byte *COM_LoadMallocFile (const char *path, unsigned int *path_id);
 	// allocates the buffer on the system mem (malloc).
 
