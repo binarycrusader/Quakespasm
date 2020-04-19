@@ -121,10 +121,10 @@ override an explicit setting on the original command line.
 #[allow(bad_style)]
 pub mod capi {
     use cvar::{CVarFlags, CVarT};
-    use libc::{c_char, c_float};
+    use libc::size_t;
     use std::ffi::CStr;
-    use std::os::raw::{c_int, c_ushort};
-    use std::ptr::null_mut;
+    use std::os::raw::{c_char, c_float, c_int, c_ushort};
+    use std::ptr::{null, null_mut};
     use {LinkT, CMDLINE_LENGTH};
     use {QBoolean, MAX_NUM_ARGVS};
 
@@ -236,6 +236,30 @@ pub mod capi {
 
     ============================================================================
     */
+    #[no_mangle]
+    pub fn q_strncasecmp(s1: *const c_char, s2: *const c_char, n: size_t) -> c_int {
+        if s1 == s2 || n == 0 {
+            return 0;
+        }
+
+        let p1 = unsafe { CStr::from_ptr(s1) };
+        let p1bytes = p1.to_bytes_with_nul();
+
+        let p2 = unsafe { CStr::from_ptr(s2) };
+        let p2bytes = p2.to_bytes_with_nul();
+
+        let mut rem = n;
+        for (c1, c2) in p1bytes.iter().zip(p2bytes.iter()) {
+            let lc1 = c1.to_ascii_lowercase() as c_int;
+            let lc2 = c2.to_ascii_lowercase() as c_int;
+            rem -= 1;
+
+            if rem == 0 || lc1 != lc2 {
+                return lc1 - lc2;
+            }
+        }
+        return 0;
+    }
 
     #[no_mangle]
     pub fn q_strcasecmp(s1: *const c_char, s2: *const c_char) -> c_int {
@@ -257,6 +281,36 @@ pub mod capi {
             }
         }
         return 0;
+    }
+
+    #[no_mangle]
+    pub fn q_strcasestr(haystack: *const c_char, needle: *const c_char) -> *const c_char {
+        if haystack == needle || unsafe { *needle } == 0 {
+            return haystack;
+        }
+
+        let p1 = unsafe { CStr::from_ptr(haystack) };
+        let hay_bytes = p1.to_bytes();
+        let hay_len = hay_bytes.len();
+
+        let p2 = unsafe { CStr::from_ptr(needle) };
+        let needle_bytes = p2.to_bytes();
+        let needle_len = needle_bytes.len();
+
+        if hay_len < needle_len {
+            return null(); // Not enough to find match of expected size.
+        }
+
+        for pos in 0..hay_len {
+            let rem_bytes = &hay_bytes[pos..pos + needle_len];
+            if rem_bytes.eq_ignore_ascii_case(needle_bytes) {
+                return unsafe { haystack.offset(pos as isize) };
+            } else if (pos + 1 + needle_len) > hay_len {
+                return null(); // Not enough left to find match of expected size on next iteration.
+            }
+        }
+
+        return null(); // didn't find it
     }
 
     #[no_mangle]

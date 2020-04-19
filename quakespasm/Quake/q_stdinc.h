@@ -5,7 +5,6 @@
  * NOTE:	for net stuff use net_sys.h,
  *		for byte order use q_endian.h,
  *		for math stuff use mathlib.h,
- *		for locale-insensitive ctype.h functions use q_ctype.h.
  *
  * Copyright (C) 1996-1997  Id Software, Inc.
  * Copyright (C) 2007-2011  O.Sezer <sezero@users.sourceforge.net>

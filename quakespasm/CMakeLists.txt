@@ -108,7 +108,6 @@ set(QS_COM_HDR
         progdefs.q1
         progs.h
         protocol.h
-        q_ctype.h
         q_sound.h
         q_stdinc.h
         qs_bmp.h
