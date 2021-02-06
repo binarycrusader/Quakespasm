@@ -28,7 +28,7 @@ use std::ptr::null_mut;
 use Byte;
 
 pub const VID_CBITS: usize = 6;
-pub const VID_GRADES: usize = (1 << VID_CBITS);
+pub const VID_GRADES: usize = 1 << VID_CBITS;
 pub const GAMMA_MAX: f32 = 3.0;
 
 #[derive(Clone, Copy, PartialEq)]

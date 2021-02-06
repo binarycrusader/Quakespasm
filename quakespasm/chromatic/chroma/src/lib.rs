@@ -296,11 +296,11 @@ pub const RIT_SUPERHEALTH: u32 = 2147483648;
 pub const HIT_PROXIMITY_GUN_BIT: u32 = 16;
 pub const HIT_MJOLNIR_BIT: u32 = 7;
 pub const HIT_LASER_CANNON_BIT: u32 = 23;
-pub const HIT_PROXIMITY_GUN: u32 = (1 << HIT_PROXIMITY_GUN_BIT);
-pub const HIT_MJOLNIR: u32 = (1 << HIT_MJOLNIR_BIT);
-pub const HIT_LASER_CANNON: u32 = (1 << HIT_LASER_CANNON_BIT);
-pub const HIT_WETSUIT: u32 = (1 << (23 + 2));
-pub const HIT_EMPATHY_SHIELDS: u32 = (1 << (23 + 3));
+pub const HIT_PROXIMITY_GUN: u32 = 1 << HIT_PROXIMITY_GUN_BIT;
+pub const HIT_MJOLNIR: u32 = 1 << HIT_MJOLNIR_BIT;
+pub const HIT_LASER_CANNON: u32 = 1 << HIT_LASER_CANNON_BIT;
+pub const HIT_WETSUIT: u32 = 1 << (23 + 2);
+pub const HIT_EMPATHY_SHIELDS: u32 = 1 << (23 + 3);
 
 pub const MAX_SCOREBOARD: usize = 16;
 pub const MAX_SCOREBOARDNAME: usize = 32;

@@ -50,11 +50,11 @@ pub const BSPVERSION: u32 = 29;
 
 /// RMQ support (2PSB). 32bits instead of shorts for all but bbox sizes (which still use shorts)
 pub const BSP2VERSION_2PSB: u32 =
-    ((('B' as u32) << 24) | (('S' as u32) << 16) | (('P' as u32) << 8) | ('2' as u32));
+    (('B' as u32) << 24) | (('S' as u32) << 16) | (('P' as u32) << 8) | ('2' as u32);
 
 /// BSP2 support. 32bits instead of shorts for everything (bboxes use floats)
 pub const BSP2VERSION_BSP2: u32 =
-    ((('B' as u32) << 0) | (('S' as u32) << 8) | (('P' as u32) << 16) | (('2' as u32) << 24));
+    (('B' as u32) << 0) | (('S' as u32) << 8) | (('P' as u32) << 16) | (('2' as u32) << 24);
 
 #[derive(Clone, Copy)]
 #[repr(C)]

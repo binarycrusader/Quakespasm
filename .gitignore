@@ -1,8 +1,9 @@
 ﻿quakespasm/chromatic/target
-quakespasm/cmake-build-debug
+quakespasm/cmake-build-*
 quakespasm/Windows/VisualStudio/UpgradeLog*
 quakespasm/Windows/VisualStudio/Build-quakespasm
 quakespasm/Windows/VisualStudio/Build-quakespasm-sdl2
+quakespasm/chromatic/Makefile
 *.obj
 *.dll
 *.lib

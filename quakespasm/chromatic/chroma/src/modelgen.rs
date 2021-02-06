@@ -204,4 +204,4 @@ pub struct DAliasSkinTypeT {
 
 /// little-endian "IDPO"
 pub const IDPOLYHEADER: u32 =
-    ((('O' as u32) << 24) + (('P' as u32) << 16) + (('D' as u32) << 8) + ('I' as u32));
+    (('O' as u32) << 24) + (('P' as u32) << 16) + (('D' as u32) << 8) + ('I' as u32);

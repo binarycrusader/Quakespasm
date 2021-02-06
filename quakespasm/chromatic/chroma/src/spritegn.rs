@@ -121,4 +121,4 @@ pub struct DSpriteFrameTypeT {
 
 /// little-endian "IDSP"
 pub const IDSPRITEHEADER: u32 =
-    ((('P' as u32) << 24) + (('S' as u32) << 16) + (('D' as u32) << 8) + ('I' as u32));
+    (('P' as u32) << 24) + (('S' as u32) << 16) + (('D' as u32) << 8) + ('I' as u32);

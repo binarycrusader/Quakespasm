@@ -42,8 +42,8 @@ pub struct QSockAddr {
     qsa_data: [c_uchar; 14],
 }
 
-pub const NET_HEADERSIZE: usize = (2 * size_of::<c_uint>());
-pub const NET_DATAGRAMSIZE: usize = (MAX_DATAGRAM + NET_HEADERSIZE);
+pub const NET_HEADERSIZE: usize = 2 * size_of::<c_uint>();
+pub const NET_DATAGRAMSIZE: usize = MAX_DATAGRAM + NET_HEADERSIZE;
 
 bitflags! {
     #[derive(Default)]
