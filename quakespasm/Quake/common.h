@@ -119,18 +119,18 @@ float MSG_ReadAngle16 (unsigned int flags); //johnfitz
 
 //============================================================================
 
-void Q_memset (void *dest, int fill, size_t count);
-void Q_memcpy (void *dest, const void *src, size_t count);
+extern void Q_memset (void *dest, int fill, size_t count);
+extern void Q_memcpy (void *dest, const void *src, size_t count);
 
-void Q_strcpy (char *dest, const char *src);
-void Q_strncpy (char *dest, const char *src, int count);
-int Q_strlen (const char *str);
-char *Q_strrchr (const char *s, char c);
-void Q_strcat (char *dest, const char *src);
-int Q_strcmp (const char *s1, const char *s2);
-int Q_strncmp (const char *s1, const char *s2, int count);
-int	Q_atoi (const char *str);
-float Q_atof (const char *str);
+extern void Q_strcpy (char *dest, const char *src);
+extern void Q_strncpy (char *dest, const char *src, int count);
+extern int Q_strlen (const char *str);
+extern char *Q_strrchr (const char *s, char c);
+extern void Q_strcat (char *dest, const char *src);
+extern int Q_strcmp (const char *s1, const char *s2);
+extern int Q_strncmp (const char *s1, const char *s2, int count);
+extern int Q_atoi (const char *str);
+extern float Q_atof (const char *str);
 
 
 #include "strl_fn.h"
@@ -169,11 +169,11 @@ void COM_Init (void);
 void COM_InitArgv (int argc, char **argv);
 void COM_InitFilesystem (void);
 
-const char *COM_SkipPath (const char *pathname);
-void COM_StripExtension (const char *in, char *out, size_t outsize);
-void COM_FileBase (const char *in, char *out, size_t outsize);
-void COM_AddExtension (char *path, const char *extension, size_t len);
-const char *COM_FileGetExtension (const char *in); /* doesn't return NULL */
+extern const char *COM_SkipPath (const char *pathname);
+extern void COM_StripExtension (const char *in, char *out, size_t outsize);
+extern void COM_FileBase (const char *in, char *out, size_t outsize);
+extern void COM_AddExtension (char *path, const char *extension, size_t len);
+extern const char *COM_FileGetExtension (const char *in); /* doesn't return NULL */
 void COM_CreatePath (char *path);
 
 char *va (const char *format, ...) FUNC_PRINTF(1,2);

@@ -1,6 +1,6 @@
 /*
 Copyright (C) 1996-2001 Id Software, Inc.
-Copyright (C) 2002-2009 John Fitzgibbons and others
+Copyright (C) 2002-2009 John Fitzgibbons and othersr
 Copyright (C) 2010-2014 QuakeSpasm developers
 
 This program is free software; you can redistribute it and/or
@@ -25,14 +25,21 @@ use std::os::raw::c_int;
 use std::ptr::null_mut;
 use {Byte, QBoolean};
 
-// if a packfile directory differs from this, it is assumed to be hacked/modified
-pub const PAK0_COUNT: usize = 339; // id1/pak0.pak - v1.0x
-pub const PAK0_CRC_V100: u32 = 13900; // id1/pak0.pak - v1.00
-pub const PAK0_CRC_V101: u32 = 62751; // id1/pak0.pak - v1.01
-pub const PAK0_CRC_V106: u32 = 32981; // id1/pak0.pak - v1.06
+/// if a packfile directory differs from this, it is assumed to be hacked/modified
+
+/// id1/pak0.pak - v1.0x
+pub const PAK0_COUNT: usize = 339;
+/// id1/pak0.pak - v1.00
+pub const PAK0_CRC_V100: u32 = 13900;
+/// id1/pak0.pak - v1.01
+pub const PAK0_CRC_V101: u32 = 62751;
+/// id1/pak0.pak - v1.06
+pub const PAK0_CRC_V106: u32 = 32981;
 pub const PAK0_CRC: u32 = PAK0_CRC_V106;
-pub const PAK0_COUNT_V091: usize = 308; // id1/pak0.pak - v0.91/0.92, not supported
-pub const PAK0_CRC_V091: u32 = 28804; // id1/pak0.pak - v0.91/0.92, not supported
+/// id1/pak0.pak - v0.91/0.92, not supported
+pub const PAK0_COUNT_V091: usize = 308;
+/// id1/pak0.pak - v0.91/0.92, not supported
+pub const PAK0_CRC_V091: u32 = 28804;
 
 pub const CMDLINE_LENGTH: usize = 256; // mirrored in cmd.rs
 
@@ -123,8 +130,10 @@ pub mod capi {
     use cvar::{CVarFlags, CVarT};
     use libc::size_t;
     use std::ffi::CStr;
-    use std::os::raw::{c_char, c_float, c_int, c_ushort};
+    use std::os::raw::{c_char, c_float, c_int, c_ushort, c_void};
     use std::ptr::{null, null_mut};
+    use std::slice;
+    use {cvar_null_string, q_strlcpy};
     use {LinkT, CMDLINE_LENGTH};
     use {QBoolean, MAX_NUM_ARGVS};
 
@@ -203,6 +212,9 @@ pub mod capi {
         0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x6500, 0x0000, 0x0000, 0x0000, 0x0000,
         0x0000, 0x0000, 0x0000, 0x6400, 0x0000, 0x0000, 0x0000,
     ];
+
+    #[no_mangle]
+    pub static mut host_bigendian: QBoolean = QBoolean::False;
 
     // ClearLink is used for new headnodes
     #[no_mangle]
@@ -351,7 +363,7 @@ pub mod capi {
             // base 16 number prefixed with 0x or 0X
             str_slice = &str_slice[2..];
 
-            let cstr = unsafe { CStr::from_bytes_with_nul_unchecked(str_slice) };
+            cstr = unsafe { CStr::from_bytes_with_nul_unchecked(str_slice) };
             if let Ok(s) = cstr.to_str() {
                 if let Ok(v) = i32::from_str_radix(s, 16) {
                     return if is_neg { -v as c_float } else { v as c_float };
@@ -379,5 +391,364 @@ pub mod capi {
                 }
             }
         }
+    }
+
+    #[no_mangle]
+    pub fn Q_memset(dest: *mut c_void, fill: c_int, count: size_t) {
+        // TODO: Replace with dest_slice.fill() in rust 1.50+
+        let dest_slice = unsafe { slice::from_raw_parts_mut(dest as *mut u8, count) };
+        for i in &mut dest_slice[..] {
+            *i = fill as u8
+        }
+    }
+
+    #[no_mangle]
+    pub fn Q_memcpy(dest: *mut c_void, src: *const c_void, count: size_t) {
+        let src_slice = unsafe { slice::from_raw_parts_mut(src as *mut u8, count) };
+        let dest_slice = unsafe { slice::from_raw_parts_mut(dest as *mut u8, count) };
+        dest_slice.copy_from_slice(src_slice)
+    }
+
+    #[no_mangle]
+    pub fn Q_strcpy(dest: *mut c_char, src: *const c_char) {
+        let src_str = unsafe { CStr::from_ptr(src) };
+        let src_str_slice = src_str.to_bytes_with_nul();
+
+        let dst_str_slice =
+            unsafe { slice::from_raw_parts_mut(dest as *mut u8, src_str_slice.len()) };
+        dst_str_slice.copy_from_slice(src_str_slice);
+    }
+
+    #[no_mangle]
+    pub fn Q_strncpy(dest: *mut c_char, src: *const c_char, count: c_int) {
+        let src_str = unsafe { CStr::from_ptr(src) };
+        let mut src_str_slice = src_str.to_bytes_with_nul();
+
+        let dst_str_slice;
+        if src_str_slice.len() > count as usize {
+            src_str_slice = unsafe { slice::from_raw_parts_mut(src as *mut u8, count as usize) };
+            dst_str_slice = unsafe { slice::from_raw_parts_mut(dest as *mut u8, count as usize) };
+        } else {
+            dst_str_slice =
+                unsafe { slice::from_raw_parts_mut(dest as *mut u8, src_str_slice.len()) };
+        }
+        dst_str_slice.copy_from_slice(src_str_slice);
+    }
+
+    #[no_mangle]
+    pub fn Q_strlen(str: *const c_char) -> c_int {
+        let s = unsafe { CStr::from_ptr(str) };
+        s.to_bytes().len() as c_int
+    }
+
+    #[no_mangle]
+    pub fn Q_strrchr(s: *const c_char, c: c_char) -> *const c_char {
+        let str = unsafe { CStr::from_ptr(s) };
+        let str_slice = str.to_bytes();
+        str_slice
+            .iter()
+            .rposition(|&hay| hay == c as u8)
+            .map_or(null(), |pos| unsafe { s.add(pos) })
+    }
+
+    #[no_mangle]
+    pub fn Q_strcat(dest: *mut c_char, src: *const c_char) {
+        let src_str = unsafe { CStr::from_ptr(src) };
+        let src_str_slice = src_str.to_bytes_with_nul();
+
+        let dest_str = unsafe { CStr::from_ptr(dest) };
+        let dest_str_slice = unsafe {
+            slice::from_raw_parts_mut(
+                dest.add(dest_str.to_bytes().len()) as *mut u8,
+                src_str_slice.len(),
+            )
+        };
+        dest_str_slice.copy_from_slice(src_str_slice);
+    }
+
+    #[no_mangle]
+    pub unsafe fn Q_strcmp(s1: *const c_char, s2: *const c_char) -> c_int {
+        let mut p1 = s1;
+        let mut p2 = s2;
+
+        loop {
+            if *p1 != *p2 {
+                return -1;
+            } // strings not equal
+            if *p1 == b'\0' as i8 {
+                return 0;
+            } // strings are equal
+            p1 = p1.add(1);
+            p2 = p2.add(1);
+        }
+    }
+
+    #[no_mangle]
+    pub unsafe fn Q_strncmp(s1: *const c_char, s2: *const c_char, count: c_int) -> c_int {
+        let mut p1 = s1;
+        let mut p2 = s2;
+        let mut rem = count;
+
+        loop {
+            if rem == 0 {
+                return 0;
+            } // strings are equal inclusive of count
+            if *p1 != *p2 {
+                return -1;
+            } // strings not equal
+            if *p1 == b'\0' as i8 {
+                return 0;
+            } // strings are equal
+            p1 = p1.add(1);
+            p2 = p2.add(1);
+            rem -= 1;
+        }
+    }
+
+    #[no_mangle]
+    pub fn Q_atoi(str: *const c_char) -> c_int {
+        let mut cstr = unsafe { CStr::from_ptr(str) };
+
+        let mut str_slice = cstr.to_bytes_with_nul();
+        if str_slice.len() <= 1 {
+            return 0;
+        }
+
+        let mut is_neg = false;
+        if let b'-' = str_slice[0] {
+            is_neg = true;
+            str_slice = &str_slice[1..];
+        }
+
+        if str_slice.len() == 2 {
+            if let b'0'..=b'9' = str_slice[0] {
+                return if is_neg {
+                    -((str_slice[0] - b'0') as c_int)
+                } else {
+                    (str_slice[0] - b'0') as c_int
+                };
+            }
+        }
+
+        //
+        // check for character
+        //
+        if str_slice[0] == b'\'' {
+            // Single character of the form 'A'
+            let rval = if is_neg {
+                -(str_slice[1] as c_int)
+            } else {
+                str_slice[1] as c_int
+            };
+
+            return rval;
+        } else if str_slice[0] == b'0' && (str_slice[1] == b'x' || str_slice[1] == b'X') {
+            // base 16 number prefixed with 0x or 0X
+            str_slice = &str_slice[2..];
+
+            let cstr = unsafe { CStr::from_bytes_with_nul_unchecked(str_slice) };
+            if let Ok(s) = cstr.to_str() {
+                if let Ok(v) = i32::from_str_radix(s, 16) {
+                    return if is_neg { -v as c_int } else { v as c_int };
+                }
+            }
+            return if is_neg { -0 } else { 0 };
+        }
+
+        match str_slice[0] {
+            b'0'..=b'9' => {
+                // Assume decimal
+                cstr = unsafe { CStr::from_bytes_with_nul_unchecked(str_slice) };
+                if let Ok(s) = cstr.to_str() {
+                    if let Ok(v) = s.parse::<i32>() {
+                        return if is_neg { -v } else { v };
+                    }
+                }
+                return if is_neg { -0 } else { 0 };
+            }
+            _ => {
+                if is_neg {
+                    -0
+                } else {
+                    0
+                }
+            }
+        }
+    }
+
+    #[no_mangle]
+    pub fn COM_SkipPath(pathname: *const c_char) -> *const c_char {
+        let str = unsafe { CStr::from_ptr(pathname) };
+        let str_slice = str.to_bytes();
+        str_slice
+            .iter()
+            .rposition(|&hay| hay == '/' as u8)
+            .map_or(pathname, |pos| unsafe { pathname.add(pos + 1) })
+    }
+
+    #[no_mangle]
+    pub fn COM_StripExtension(inn: *const c_char, outn: *mut c_char, outsize: size_t) {
+        if inn.is_null() {
+            unsafe {
+                outn.write_unaligned('\0' as i8);
+            }
+            return;
+        }
+
+        if inn != outn {
+            // If not an in-place edit, duplicate source first.
+            q_strlcpy(outn, inn, outsize);
+        }
+
+        let str = unsafe { CStr::from_ptr(outn) };
+        let str_slice = str.to_bytes();
+
+        for (pos, c) in str_slice.iter().enumerate().rev() {
+            match *c {
+                b'/' | b'\\' => return, // no extension
+                b'.' => {
+                    unsafe {
+                        outn.add(pos).write_unaligned('\0' as i8);
+                    }
+                    return;
+                }
+                _ => continue,
+            }
+        }
+    }
+
+    #[no_mangle]
+    pub fn COM_FileGetExtension(inn: *const c_char) -> *const c_char {
+        let str = unsafe { CStr::from_ptr(inn) };
+        let str_slice = str.to_bytes();
+        for (pos, c) in str_slice.iter().enumerate().rev() {
+            match c {
+                b'.' => {
+                    return unsafe { inn.add(pos + 1) };
+                }
+                b'/' | b'\\' => {
+                    break;
+                }
+                _ => {
+                    continue;
+                }
+            }
+        }
+
+        return cvar_null_string.as_ptr() as *const c_char; // eol; no extension
+    }
+
+    /// Given '[somedir/otherdir/]filename[.ext]', write only 'filename' to the output up to outsize
+    /// - 1 characters.  If no 'filename' is present, '?model?' will be used as the 'filename' for
+    /// debugging purposes.
+    #[no_mangle]
+    pub fn COM_FileBase(inn: *const c_char, outn: *mut c_char, outsize: size_t) {
+        // TODO: simplify
+        let mut has_path = false;
+        let mut has_ext = false;
+        let mut pos_path = 0;
+        let mut pos_ext = 0;
+        if !inn.is_null() {
+            let src = unsafe { CStr::from_ptr(inn) };
+            let mut src_slice = src.to_bytes();
+
+            for (pos, c) in src_slice.iter().enumerate().rev() {
+                match *c {
+                    b'.' => {
+                        pos_ext = pos;
+                        has_ext = true;
+                        continue;
+                    }
+                    b'/' | b'\\' => {
+                        pos_path = pos;
+                        has_path = true;
+                        break;
+                    }
+                    _ => continue,
+                }
+            }
+
+            if has_ext {
+                src_slice = src_slice.split_at(pos_ext).0;
+            }
+
+            if has_path {
+                if (pos_path + 1) == src_slice.len() {
+                    src_slice = &[];
+                } else {
+                    src_slice = src_slice.split_at(pos_path + 1).1;
+                }
+            }
+
+            if !src_slice.is_empty() {
+                let dest_slice;
+                if src_slice.len() >= outsize {
+                    src_slice = src_slice.split_at(outsize - 1).0;
+                    dest_slice = unsafe { slice::from_raw_parts_mut(outn as *mut u8, outsize - 1) };
+                } else {
+                    dest_slice =
+                        unsafe { slice::from_raw_parts_mut(outn as *mut u8, src_slice.len()) };
+                }
+
+                dest_slice.copy_from_slice(src_slice);
+                unsafe {
+                    outn.add(src_slice.len()).write_unaligned(b'\0' as i8);
+                }
+                return;
+            }
+        }
+
+        // If no basename, it could be a model, so use a debug-friendly basename.
+        q_strlcpy(outn, b"?model?".as_ptr() as *const c_char, outsize);
+    }
+
+    /// If 'path' is not empty, and does not have an extension or the extension doesn't match .EXT,
+    /// and path plus new 'extension' does not exceed 'len' - 1, append it ('extension' should
+    /// include the leading ".").
+    #[no_mangle]
+    pub fn COM_AddExtension(path: *mut c_char, extension: *const c_char, len: size_t) {
+        let path_str = unsafe { CStr::from_ptr(path) };
+        let path_slice = path_str.to_bytes();
+
+        if path_slice.len() == 0 || len <= path_slice.len() {
+            return; // eop; cannot add extension
+        }
+
+        let ext_str = unsafe { CStr::from_ptr(extension) };
+        let ext_slice = ext_str.to_bytes();
+
+        let mut new_ext_pos = path_slice.len();
+        for (pos, c) in path_slice.iter().enumerate().rev() {
+            match c {
+                b'.' => {
+                    let path_ext_slice = &path_slice[pos..];
+                    if ext_slice.eq_ignore_ascii_case(path_ext_slice) {
+                        new_ext_pos = 0; // nothing to do
+                    } else {
+                        new_ext_pos = pos;
+                    }
+                    break;
+                }
+                b'/' | b'\\' => {
+                    if (pos + 1) >= path_slice.len() {
+                        return; // eop; cannot add extension
+                    }
+                }
+                _ => {
+                    continue;
+                }
+            }
+        }
+
+        if new_ext_pos == 0 {
+            return; // abort; either path is empty or already has extension
+        } else if new_ext_pos + 1 + ext_slice.len() >= len {
+            return; // abort; not enough space to add new extension
+        }
+
+        let dst_slice = unsafe { slice::from_raw_parts_mut(path, len) };
+        let (_, dst_rem_slice) = dst_slice.split_at_mut(new_ext_pos);
+        q_strlcpy(dst_rem_slice.as_mut_ptr(), extension, dst_rem_slice.len());
+        return;
     }
 }
