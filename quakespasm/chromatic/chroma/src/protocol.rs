@@ -200,6 +200,7 @@ pub const ENTALPHA_ZERO: u32 = 1;
 /// entity is fully opaque (highest possible alpha)
 pub const ENTALPHA_ONE: u32 = 255;
 
+/// Formerly: ENTALPHA_ENCODE
 /// server convert to byte to send to client
 pub fn ent_alpha_encode(a: f32) -> u32 {
     if a == 0.0 {
@@ -208,6 +209,7 @@ pub fn ent_alpha_encode(a: f32) -> u32 {
     return q_rint(clamp(a * 254.0 + 1.0, 1.0, 255.0));
 }
 
+/// Formerly: ENTALPHA_DECODE
 ///client convert to float for rendering
 pub fn ent_alpha_decode(a: u32) -> f32 {
     if a == ENTALPHA_DEFAULT {
@@ -216,6 +218,7 @@ pub fn ent_alpha_decode(a: u32) -> f32 {
     return ((a as f32) - 1.0) / 254.0;
 }
 
+/// Formerly: ENTALPHA_TOSAVE
 ///server convert to float for savegame
 pub fn ent_alpha_to_save(a: u32) -> f32 {
     if a == ENTALPHA_DEFAULT {

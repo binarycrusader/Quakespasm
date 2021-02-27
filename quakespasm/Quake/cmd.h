@@ -104,7 +104,7 @@ const char	*Cmd_Args (void);
 
 int Cmd_CheckParm (const char *parm);
 // Returns the position (1 to argc-1) in the command's argument list
-// where the given parameter apears, or 0 if not present
+// where the given parameter appears, or 0 if not present
 
 void Cmd_TokenizeString (const char *text);
 // Takes a null terminated string.  Does not need to be /n terminated.

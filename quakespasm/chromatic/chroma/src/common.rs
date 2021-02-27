@@ -130,9 +130,10 @@ pub mod capi {
     use cvar::{CVarFlags, CVarT};
     use libc::size_t;
     use std::ffi::CStr;
-    use std::os::raw::{c_char, c_float, c_int, c_ushort, c_void};
+    use std::os::raw::{c_char, c_float, c_int, c_ushort, c_void, c_short};
     use std::ptr::{null, null_mut};
     use std::slice;
+    use SizeBufT;
     use {cvar_null_string, q_strlcpy};
     use {LinkT, CMDLINE_LENGTH};
     use {QBoolean, MAX_NUM_ARGVS};
@@ -244,12 +245,55 @@ pub mod capi {
     /*
     ============================================================================
 
+					BYTE ORDER FUNCTIONS
+
+    ============================================================================
+    */
+    #[no_mangle]
+    pub extern "C" fn ShortSwap(l: c_short) -> c_short
+    {
+        return l.swap_bytes();
+    }
+
+    #[no_mangle]
+    pub extern "C" fn ShortNoSwap(l: c_short) -> c_short
+    {
+        return l;
+    }
+
+    #[no_mangle]
+    pub extern "C" fn LongSwap (l: c_int) -> c_int
+    {
+        return l.swap_bytes();
+    }
+
+    #[no_mangle]
+    pub extern "C" fn LongNoSwap(l: c_int) -> c_int
+    {
+        return l;
+    }
+
+    #[no_mangle]
+    pub extern "C" fn FloatSwap(f: c_float) -> c_float
+    {
+        return f.to_bits().swap_bytes() as f32;
+    }
+
+    #[no_mangle]
+    pub extern "C" fn FloatNoSwap(f: c_float) -> c_float
+    {
+        return f;
+    }
+
+    /*
+    ============================================================================
+
                         LIBRARY REPLACEMENT FUNCTIONS
 
     ============================================================================
     */
     #[no_mangle]
-    pub fn q_strncasecmp(s1: *const c_char, s2: *const c_char, n: size_t) -> c_int {
+    pub extern "C" fn q_strncasecmp(s1: *const c_char, s2: *const c_char, n: size_t) -> c_int {
         if s1 == s2 || n == 0 {
             return 0;
         }
@@ -274,7 +318,7 @@ pub mod capi {
     }
 
     #[no_mangle]
-    pub fn q_strcasecmp(s1: *const c_char, s2: *const c_char) -> c_int {
+    pub extern "C" fn q_strcasecmp(s1: *const c_char, s2: *const c_char) -> c_int {
         if s1 == s2 {
             return 0;
         }
@@ -296,7 +340,7 @@ pub mod capi {
     }
 
     #[no_mangle]
-    pub fn q_strcasestr(haystack: *const c_char, needle: *const c_char) -> *const c_char {
+    pub extern "C" fn q_strcasestr(haystack: *const c_char, needle: *const c_char) -> *const c_char {
         if haystack == needle || unsafe { *needle } == 0 {
             return haystack;
         }
@@ -326,7 +370,7 @@ pub mod capi {
     }
 
     #[no_mangle]
-    pub fn Q_atof(str: *const c_char) -> c_float {
+    pub extern "C" fn Q_atof(str: *const c_char) -> c_float {
         let mut cstr = unsafe { CStr::from_ptr(str) };
 
         let mut str_slice = cstr.to_bytes_with_nul();
@@ -394,7 +438,7 @@ pub mod capi {
     }
 
     #[no_mangle]
-    pub fn Q_memset(dest: *mut c_void, fill: c_int, count: size_t) {
+    pub extern "C" fn Q_memset(dest: *mut c_void, fill: c_int, count: size_t) {
         // TODO: Replace with dest_slice.fill() in rust 1.50+
         let dest_slice = unsafe { slice::from_raw_parts_mut(dest as *mut u8, count) };
         for i in &mut dest_slice[..] {
@@ -403,14 +447,14 @@ pub mod capi {
     }
 
     #[no_mangle]
-    pub fn Q_memcpy(dest: *mut c_void, src: *const c_void, count: size_t) {
+    pub extern "C" fn Q_memcpy(dest: *mut c_void, src: *const c_void, count: size_t) {
         let src_slice = unsafe { slice::from_raw_parts_mut(src as *mut u8, count) };
         let dest_slice = unsafe { slice::from_raw_parts_mut(dest as *mut u8, count) };
         dest_slice.copy_from_slice(src_slice)
     }
 
     #[no_mangle]
-    pub fn Q_strcpy(dest: *mut c_char, src: *const c_char) {
+    pub extern "C" fn Q_strcpy(dest: *mut c_char, src: *const c_char) {
         let src_str = unsafe { CStr::from_ptr(src) };
         let src_str_slice = src_str.to_bytes_with_nul();
 
@@ -420,7 +464,7 @@ pub mod capi {
     }
 
     #[no_mangle]
-    pub fn Q_strncpy(dest: *mut c_char, src: *const c_char, count: c_int) {
+    pub extern "C" fn Q_strncpy(dest: *mut c_char, src: *const c_char, count: c_int) {
         let src_str = unsafe { CStr::from_ptr(src) };
         let mut src_str_slice = src_str.to_bytes_with_nul();
 
@@ -436,13 +480,13 @@ pub mod capi {
     }
 
     #[no_mangle]
-    pub fn Q_strlen(str: *const c_char) -> c_int {
+    pub extern "C" fn Q_strlen(str: *const c_char) -> c_int {
         let s = unsafe { CStr::from_ptr(str) };
         s.to_bytes().len() as c_int
     }
 
     #[no_mangle]
-    pub fn Q_strrchr(s: *const c_char, c: c_char) -> *const c_char {
+    pub extern "C" fn Q_strrchr(s: *const c_char, c: c_char) -> *const c_char {
         let str = unsafe { CStr::from_ptr(s) };
         let str_slice = str.to_bytes();
         str_slice
@@ -452,7 +496,7 @@ pub mod capi {
     }
 
     #[no_mangle]
-    pub fn Q_strcat(dest: *mut c_char, src: *const c_char) {
+    pub extern "C" fn Q_strcat(dest: *mut c_char, src: *const c_char) {
         let src_str = unsafe { CStr::from_ptr(src) };
         let src_str_slice = src_str.to_bytes_with_nul();
 
@@ -467,19 +511,21 @@ pub mod capi {
     }
 
     #[no_mangle]
-    pub unsafe fn Q_strcmp(s1: *const c_char, s2: *const c_char) -> c_int {
+    pub extern "C" fn Q_strcmp(s1: *const c_char, s2: *const c_char) -> c_int {
         let mut p1 = s1;
         let mut p2 = s2;
 
         loop {
-            if *p1 != *p2 {
-                return -1;
-            } // strings not equal
-            if *p1 == b'\0' as i8 {
-                return 0;
-            } // strings are equal
-            p1 = p1.add(1);
-            p2 = p2.add(1);
+            unsafe {
+                if *p1 != *p2 {
+                    return -1;
+                } // strings not equal
+                if *p1 == b'\0' as i8 {
+                    return 0;
+                } // strings are equal
+                p1 = p1.add(1);
+                p2 = p2.add(1);
+            }
         }
     }
 
@@ -506,7 +552,7 @@ pub mod capi {
     }
 
     #[no_mangle]
-    pub fn Q_atoi(str: *const c_char) -> c_int {
+    pub extern "C" fn Q_atoi(str: *const c_char) -> c_int {
         let mut cstr = unsafe { CStr::from_ptr(str) };
 
         let mut str_slice = cstr.to_bytes_with_nul();
@@ -577,7 +623,31 @@ pub mod capi {
     }
 
     #[no_mangle]
-    pub fn COM_SkipPath(pathname: *const c_char) -> *const c_char {
+    pub extern "C" fn SZ_Clear(buf: *mut SizeBufT) {
+        unsafe { (*buf).cursize = 0 };
+    }
+
+    /// Returns the position (1 to argc - 1) in the program's argument list where the given parameter
+    /// appears, or 0 if not present.
+    #[no_mangle]
+    pub extern "C" fn COM_CheckParm(parm: *const c_char) -> c_int {
+        let argc = unsafe { com_argc } as usize;
+        for i in 1..argc {
+            let arg = unsafe { *com_argv.add(i) };
+            if arg.is_null() {
+                continue; // NEXTSTEP sometimes clears appkit vars.
+            }
+
+            if Q_strcmp(parm, arg) == 0 {
+                return i as c_int;
+            }
+        }
+
+        return 0;
+    }
+
+    #[no_mangle]
+    pub extern "C" fn COM_SkipPath(pathname: *const c_char) -> *const c_char {
         let str = unsafe { CStr::from_ptr(pathname) };
         let str_slice = str.to_bytes();
         str_slice
@@ -587,7 +657,7 @@ pub mod capi {
     }
 
     #[no_mangle]
-    pub fn COM_StripExtension(inn: *const c_char, outn: *mut c_char, outsize: size_t) {
+    pub extern "C" fn COM_StripExtension(inn: *const c_char, outn: *mut c_char, outsize: size_t) {
         if inn.is_null() {
             unsafe {
                 outn.write_unaligned('\0' as i8);
@@ -618,7 +688,7 @@ pub mod capi {
     }
 
     #[no_mangle]
-    pub fn COM_FileGetExtension(inn: *const c_char) -> *const c_char {
+    pub extern "C" fn COM_FileGetExtension(inn: *const c_char) -> *const c_char {
         let str = unsafe { CStr::from_ptr(inn) };
         let str_slice = str.to_bytes();
         for (pos, c) in str_slice.iter().enumerate().rev() {
@@ -642,7 +712,7 @@ pub mod capi {
     /// - 1 characters.  If no 'filename' is present, '?model?' will be used as the 'filename' for
     /// debugging purposes.
     #[no_mangle]
-    pub fn COM_FileBase(inn: *const c_char, outn: *mut c_char, outsize: size_t) {
+    pub extern "C" fn COM_FileBase(inn: *const c_char, outn: *mut c_char, outsize: size_t) {
         // TODO: simplify
         let mut has_path = false;
         let mut has_ext = false;
@@ -706,7 +776,7 @@ pub mod capi {
     /// and path plus new 'extension' does not exceed 'len' - 1, append it ('extension' should
     /// include the leading ".").
     #[no_mangle]
-    pub fn COM_AddExtension(path: *mut c_char, extension: *const c_char, len: size_t) {
+    pub extern "C" fn COM_AddExtension(path: *mut c_char, extension: *const c_char, len: size_t) {
         let path_str = unsafe { CStr::from_ptr(path) };
         let path_slice = path_str.to_bytes();
 

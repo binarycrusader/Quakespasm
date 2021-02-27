@@ -123,9 +123,7 @@ pub mod capi {
         nlen = min(nlen, con_linewidth as usize);
 
         BAR[0] = 0o35; // group separator (left tapered end of line)
-        for v in &mut BAR[1..nlen - 1] {
-            *v = 0o36 // record separator (line)
-        }
+        BAR[1..nlen - 1].fill(0o36); // record separator (line)
         BAR[nlen - 1] = 0o37; // unit separator (right tapered end of line)
 
         if nlen < con_linewidth as usize {

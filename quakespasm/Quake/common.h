@@ -57,7 +57,7 @@ typedef struct sizebuf_s
 } sizebuf_t;
 
 void SZ_Alloc (sizebuf_t *buf, int startsize);
-void SZ_Clear (sizebuf_t *buf);
+extern void SZ_Clear (sizebuf_t *buf);
 void *SZ_GetSpace (sizebuf_t *buf, int length);
 void SZ_Write (sizebuf_t *buf, const void *data, int length);
 void SZ_Print (sizebuf_t *buf, const char *data);	// strcats onto the sizebuf
@@ -87,8 +87,14 @@ extern	short	(*BigShort) (short l);
 extern	short	(*LittleShort) (short l);
 extern	int	(*BigLong) (int l);
 extern	int	(*LittleLong) (int l);
-extern	float	(*BigFloat) (float l);
 extern	float	(*LittleFloat) (float l);
+
+extern short ShortSwap (short l);
+extern short ShortNoSwap (short l);
+extern int LongSwap (int l);
+extern int LongNoSwap (int l);
+extern float FloatSwap (float f);
+extern float FloatNoSwap (float f);
 
 //============================================================================
 
@@ -157,13 +163,13 @@ extern	int		com_argc;
 extern	char	**com_argv;
 
 extern	int		safemode;
-/* safe mode: in true, the engine will behave as if one
+/* safe mode: if true, the engine will behave as if one
    of these arguments were actually on the command line:
    -nosound, -nocdaudio, -nomidi, -stdvid, -dibonly,
    -nomouse, -nojoy, -nolan
  */
 
-int COM_CheckParm (const char *parm);
+extern int COM_CheckParm (const char *parm);
 
 void COM_Init (void);
 void COM_InitArgv (int argc, char **argv);

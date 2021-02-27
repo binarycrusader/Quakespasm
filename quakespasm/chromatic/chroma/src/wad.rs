@@ -122,9 +122,7 @@ pub mod capi {
         for (idx, c) in in_slice.iter().enumerate() {
             match *c {
                 0 => {
-                    for oidx in idx..out_slice.len() {
-                        out_slice[oidx] = 0;
-                    }
+                    out_slice[idx..].fill(0);
                     break;
                 }
                 b'A'..=b'Z' => {

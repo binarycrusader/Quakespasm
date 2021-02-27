@@ -133,62 +133,7 @@ short	(*BigShort) (short l);
 short	(*LittleShort) (short l);
 int	(*BigLong) (int l);
 int	(*LittleLong) (int l);
-float	(*BigFloat) (float l);
 float	(*LittleFloat) (float l);
-
-short ShortSwap (short l)
-{
-	byte	b1, b2;
-
-	b1 = l&255;
-	b2 = (l>>8)&255;
-
-	return (b1<<8) + b2;
-}
-
-short ShortNoSwap (short l)
-{
-	return l;
-}
-
-int LongSwap (int l)
-{
-	byte	b1, b2, b3, b4;
-
-	b1 = l&255;
-	b2 = (l>>8)&255;
-	b3 = (l>>16)&255;
-	b4 = (l>>24)&255;
-
-	return ((int)b1<<24) + ((int)b2<<16) + ((int)b3<<8) + b4;
-}
-
-int LongNoSwap (int l)
-{
-	return l;
-}
-
-float FloatSwap (float f)
-{
-	union
-	{
-		float	f;
-		byte	b[4];
-	} dat1, dat2;
-
-
-	dat1.f = f;
-	dat2.b[0] = dat1.b[3];
-	dat2.b[1] = dat1.b[2];
-	dat2.b[2] = dat1.b[1];
-	dat2.b[3] = dat1.b[0];
-	return dat2.f;
-}
-
-float FloatNoSwap (float f)
-{
-	return f;
-}
 
 /*
 ==============================================================================
@@ -506,12 +451,6 @@ void SZ_Alloc (sizebuf_t *buf, int startsize)
 	buf->cursize = 0;
 }
 
-
-void SZ_Clear (sizebuf_t *buf)
-{
-	buf->cursize = 0;
-}
-
 void *SZ_GetSpace (sizebuf_t *buf, int length)
 {
 	void	*data;
@@ -644,30 +583,6 @@ skipwhite:
 
 	com_token[len] = 0;
 	return data;
-}
-
-
-/*
-================
-COM_CheckParm
-
-Returns the position (1 to argc-1) in the program's argument list
-where the given parameter apears, or 0 if not present
-================
-*/
-int COM_CheckParm (const char *parm)
-{
-	int		i;
-
-	for (i = 1; i < com_argc; i++)
-	{
-		if (!com_argv[i])
-			continue;		// NEXTSTEP sometimes clears appkit vars.
-		if (!Q_strcmp (parm,com_argv[i]))
-			return i;
-	}
-
-	return 0;
 }
 
 /*
@@ -821,7 +736,6 @@ void COM_Init (void)
 		LittleShort = ShortSwap;
 		BigLong = LongNoSwap;
 		LittleLong = LongSwap;
-		BigFloat = FloatNoSwap;
 		LittleFloat = FloatSwap;
 	}
 	else /* assumed LITTLE_ENDIAN. */
@@ -830,7 +744,6 @@ void COM_Init (void)
 		LittleShort = ShortNoSwap;
 		BigLong = LongSwap;
 		LittleLong = LongNoSwap;
-		BigFloat = FloatSwap;
 		LittleFloat = FloatNoSwap;
 	}
 
