@@ -111,13 +111,13 @@ void MSG_WriteAngle16 (sizebuf_t *sb, float f, unsigned int flags); //johnfitz
 extern	int			msg_readcount;
 extern	qboolean	msg_badread;		// set if a read goes beyond end of message
 
-void MSG_BeginReading (void);
-int MSG_ReadChar (void);
-int MSG_ReadByte (void);
-int MSG_ReadShort (void);
-int MSG_ReadLong (void);
-float MSG_ReadFloat (void);
-const char *MSG_ReadString (void);
+extern void MSG_BeginReading (void);
+extern int MSG_ReadChar (void);
+extern int MSG_ReadByte (void);
+extern int MSG_ReadShort (void);
+extern int MSG_ReadLong (void);
+extern float MSG_ReadFloat (void);
+extern const char *MSG_ReadString (void);
 
 float MSG_ReadCoord (unsigned int flags);
 float MSG_ReadAngle (unsigned int flags);

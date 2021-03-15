@@ -272,126 +272,6 @@ void MSG_WriteAngle16 (sizebuf_t *sb, float f, unsigned int flags)
 //
 // reading functions
 //
-int		msg_readcount;
-qboolean	msg_badread;
-
-void MSG_BeginReading (void)
-{
-	msg_readcount = 0;
-	msg_badread = false;
-}
-
-// returns -1 and sets msg_badread if no more characters are available
-int MSG_ReadChar (void)
-{
-	int	c;
-
-	if (msg_readcount+1 > net_message.cursize)
-	{
-		msg_badread = true;
-		return -1;
-	}
-
-	c = (signed char)net_message.data[msg_readcount];
-	msg_readcount++;
-
-	return c;
-}
-
-int MSG_ReadByte (void)
-{
-	int	c;
-
-	if (msg_readcount+1 > net_message.cursize)
-	{
-		msg_badread = true;
-		return -1;
-	}
-
-	c = (unsigned char)net_message.data[msg_readcount];
-	msg_readcount++;
-
-	return c;
-}
-
-int MSG_ReadShort (void)
-{
-	int	c;
-
-	if (msg_readcount+2 > net_message.cursize)
-	{
-		msg_badread = true;
-		return -1;
-	}
-
-	c = (short)(net_message.data[msg_readcount]
-			+ (net_message.data[msg_readcount+1]<<8));
-
-	msg_readcount += 2;
-
-	return c;
-}
-
-int MSG_ReadLong (void)
-{
-	int	c;
-
-	if (msg_readcount+4 > net_message.cursize)
-	{
-		msg_badread = true;
-		return -1;
-	}
-
-	c = net_message.data[msg_readcount]
-			+ (net_message.data[msg_readcount+1]<<8)
-			+ (net_message.data[msg_readcount+2]<<16)
-			+ (net_message.data[msg_readcount+3]<<24);
-
-	msg_readcount += 4;
-
-	return c;
-}
-
-float MSG_ReadFloat (void)
-{
-	union
-	{
-		byte	b[4];
-		float	f;
-		int	l;
-	} dat;
-
-	dat.b[0] = net_message.data[msg_readcount];
-	dat.b[1] = net_message.data[msg_readcount+1];
-	dat.b[2] = net_message.data[msg_readcount+2];
-	dat.b[3] = net_message.data[msg_readcount+3];
-	msg_readcount += 4;
-
-	dat.l = LittleLong (dat.l);
-
-	return dat.f;
-}
-
-const char *MSG_ReadString (void)
-{
-	static char	string[2048];
-	int		c;
-	size_t		l;
-
-	l = 0;
-	do
-	{
-		c = MSG_ReadByte ();
-		if (c == -1 || c == 0)
-			break;
-		string[l] = c;
-		l++;
-	} while (l < sizeof(string) - 1);
-
-	string[l] = 0;
-
-	return string;
-}
 
 //johnfitz -- original behavior, 13.3 fixed point coords, max range +-4096
 float MSG_ReadCoord16 (void)
@@ -403,12 +283,6 @@ float MSG_ReadCoord16 (void)
 float MSG_ReadCoord24 (void)
 {
 	return MSG_ReadShort() + MSG_ReadByte() * (1.0/255);
-}
-
-//johnfitz -- 32-bit float coords
-float MSG_ReadCoord32f (void)
-{
-	return MSG_ReadFloat();
 }
 
 float MSG_ReadCoord (unsigned int flags)

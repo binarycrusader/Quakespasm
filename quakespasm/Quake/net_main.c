@@ -25,51 +25,21 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "quakedef.h"
 #include "net_defs.h"
 
-qsocket_t	*net_activeSockets = NULL;
-qsocket_t	*net_freeSockets = NULL;
-int		net_numsockets = 0;
+extern qboolean	listening;
 
-qboolean	ipxAvailable = false;
-qboolean	tcpipAvailable = false;
-
-int		net_hostport;
-int		DEFAULTnet_hostport = 26000;
-
-char		my_ipx_address[NET_NAMELEN];
-char		my_tcpip_address[NET_NAMELEN];
-
-static qboolean	listening = false;
-
-qboolean	slistInProgress = false;
-qboolean	slistSilent = false;
-qboolean	slistLocal = true;
-static double	slistStartTime;
-static int		slistLastShown;
+extern double	slistStartTime;
+extern int		slistLastShown;
 
 static void Slist_Send (void *);
 static void Slist_Poll (void *);
 static PollProcedure	slistSendProcedure = {NULL, 0.0, Slist_Send};
 static PollProcedure	slistPollProcedure = {NULL, 0.0, Slist_Poll};
 
-sizebuf_t	net_message;
-int		net_activeconnections		= 0;
-
-int		messagesSent			= 0;
-int		messagesReceived		= 0;
-int		unreliableMessagesSent		= 0;
-int		unreliableMessagesReceived	= 0;
-
-static	cvar_t	net_messagetimeout = {"net_messagetimeout","300",CVAR_NONE};
-cvar_t	hostname = {"hostname", "UNNAMED", CVAR_NONE};
+extern cvar_t net_messagetimeout;
 
 // these two macros are to make the code more readable
 #define sfunc	net_drivers[sock->driver]
 #define dfunc	net_drivers[net_driverlevel]
-
-int		net_driverlevel;
-
-double		net_time;
-
 
 double SetNetTime (void)
 {

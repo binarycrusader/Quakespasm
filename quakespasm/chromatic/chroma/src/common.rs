@@ -129,8 +129,9 @@ override an explicit setting on the original command line.
 pub mod capi {
     use cvar::{CVarFlags, CVarT};
     use libc::size_t;
+    use net_main::capi::net_message;
     use std::ffi::CStr;
-    use std::os::raw::{c_char, c_float, c_int, c_ushort, c_void, c_short};
+    use std::os::raw::{c_char, c_float, c_int, c_short, c_ushort, c_void};
     use std::ptr::{null, null_mut};
     use std::slice;
     use SizeBufT;
@@ -245,44 +246,176 @@ pub mod capi {
     /*
     ============================================================================
 
-					BYTE ORDER FUNCTIONS
+                    BYTE ORDER FUNCTIONS
 
     ============================================================================
     */
     #[no_mangle]
-    pub extern "C" fn ShortSwap(l: c_short) -> c_short
-    {
+    pub extern "C" fn ShortSwap(l: c_short) -> c_short {
         return l.swap_bytes();
     }
 
     #[no_mangle]
-    pub extern "C" fn ShortNoSwap(l: c_short) -> c_short
-    {
+    pub extern "C" fn ShortNoSwap(l: c_short) -> c_short {
         return l;
     }
 
     #[no_mangle]
-    pub extern "C" fn LongSwap (l: c_int) -> c_int
-    {
+    pub extern "C" fn LongSwap(l: c_int) -> c_int {
         return l.swap_bytes();
     }
 
     #[no_mangle]
-    pub extern "C" fn LongNoSwap(l: c_int) -> c_int
-    {
+    pub extern "C" fn LongNoSwap(l: c_int) -> c_int {
         return l;
     }
 
     #[no_mangle]
-    pub extern "C" fn FloatSwap(f: c_float) -> c_float
-    {
+    pub extern "C" fn FloatSwap(f: c_float) -> c_float {
         return f.to_bits().swap_bytes() as f32;
     }
 
     #[no_mangle]
-    pub extern "C" fn FloatNoSwap(f: c_float) -> c_float
-    {
+    pub extern "C" fn FloatNoSwap(f: c_float) -> c_float {
         return f;
+    }
+
+    /*
+    ==============================================================================
+
+            MESSAGE IO FUNCTIONS
+
+    Handles byte ordering and avoids alignment errors
+    ==============================================================================
+    */
+
+    //
+    // reading functions
+    //
+    #[no_mangle]
+    pub static mut msg_readcount: c_int = 0;
+    #[no_mangle]
+    pub static mut msg_badread: QBoolean = QBoolean::False;
+
+    #[no_mangle]
+    pub extern "C" fn MSG_BeginReading() {
+        unsafe {
+            msg_readcount = 0;
+            msg_badread = QBoolean::False;
+        }
+    }
+
+    /// returns -1 and sets msg_badread if no more characters are available
+    #[no_mangle]
+    pub extern "C" fn MSG_ReadChar() -> c_int {
+        let readcount = unsafe { msg_readcount } as usize;
+        let cursize = unsafe { net_message.cursize } as usize;
+        if (readcount + 1) > cursize {
+            unsafe { msg_badread = QBoolean::True };
+            return -1;
+        }
+
+        // Preserve sign by reading as signed type of same size.
+        let net_message_data =
+            unsafe { slice::from_raw_parts(net_message.data as *mut c_char, cursize) };
+        let c = net_message_data[readcount] as c_int;
+        unsafe { msg_readcount += 1 };
+        return c;
+    }
+
+    #[no_mangle]
+    pub extern "C" fn MSG_ReadByte() -> c_int {
+        let readcount = unsafe { msg_readcount } as usize;
+        let cursize = unsafe { net_message.cursize } as usize;
+        if (readcount + 1) > cursize {
+            unsafe { msg_badread = QBoolean::True };
+            return -1;
+        }
+
+        let net_message_data = unsafe { slice::from_raw_parts(net_message.data, cursize) };
+        let c = net_message_data[readcount] as c_int;
+        unsafe { msg_readcount += 1 };
+        return c;
+    }
+
+    #[no_mangle]
+    pub extern "C" fn MSG_ReadShort() -> c_int {
+        let readcount = unsafe { msg_readcount } as usize;
+        let cursize = unsafe { net_message.cursize } as usize;
+        if (readcount + 2) > cursize {
+            unsafe { msg_badread = QBoolean::True };
+            return -1;
+        }
+
+        let net_message_data =
+            unsafe { slice::from_raw_parts(net_message.data, cursize) };
+        let c = ((net_message_data[readcount] as c_int)
+            + ((net_message_data[readcount + 1] as c_int) << 8)) as c_short;
+        unsafe { msg_readcount += 2 };
+        return c as c_int;
+    }
+
+    #[no_mangle]
+    pub extern "C" fn MSG_ReadLong() -> c_int {
+        let readcount = unsafe { msg_readcount } as usize;
+        let cursize = unsafe { net_message.cursize } as usize;
+        if (readcount + 4) > cursize {
+            unsafe { msg_badread = QBoolean::True };
+            return -1;
+        }
+
+        let net_message_data =
+            unsafe { slice::from_raw_parts(net_message.data, cursize) };
+        let c = ((net_message_data[readcount] as c_int)
+            + ((net_message_data[readcount + 1] as c_int) << 8)
+            + ((net_message_data[readcount + 2] as c_int) << 16)
+            + ((net_message_data[readcount + 3] as c_int) << 24)) as c_int;
+        unsafe { msg_readcount += 4 };
+        return c as c_int;
+    }
+
+    #[no_mangle]
+    pub extern "C" fn MSG_ReadFloat() -> c_float {
+        let readcount = unsafe { msg_readcount } as usize;
+        let cursize = unsafe { net_message.cursize } as usize;
+        if (readcount + 4) > cursize {
+            unsafe { msg_badread = QBoolean::True };
+            return 0.0; // IOU: return NAN?
+        }
+
+        let net_message_data = unsafe { slice::from_raw_parts(net_message.data, cursize) };
+        let le_bytes: [u8; 4] = [
+            net_message_data[readcount],
+            net_message_data[readcount + 1],
+            net_message_data[readcount + 2],
+            net_message_data[readcount + 3],
+        ];
+        let c = f32::from_le_bytes(le_bytes) as c_float;
+        unsafe { msg_readcount += 4 };
+        return c;
+    }
+
+    #[no_mangle]
+    pub extern "C" fn MSG_ReadString() -> *const c_char {
+        static mut string: [c_char; 2048] = [0; 2048];
+        if let Some((last_c, dest_c)) = unsafe { string.split_last_mut() } {
+            for dc in dest_c.iter_mut() {
+                let c = MSG_ReadByte() as c_char;
+                match c {
+                    -1 | 0 => {
+                        *dc = b'\0' as c_char;
+                        return unsafe { string.as_ptr() };
+                    }
+                    _ => {
+                        *dc = c;
+                    }
+                };
+            }
+
+            *last_c = b'\0' as c_char;
+        }
+
+        return unsafe { string.as_ptr() };
     }
 
     /*
@@ -340,7 +473,10 @@ pub mod capi {
     }
 
     #[no_mangle]
-    pub extern "C" fn q_strcasestr(haystack: *const c_char, needle: *const c_char) -> *const c_char {
+    pub extern "C" fn q_strcasestr(
+        haystack: *const c_char,
+        needle: *const c_char,
+    ) -> *const c_char {
         if haystack == needle || unsafe { *needle } == 0 {
             return haystack;
         }

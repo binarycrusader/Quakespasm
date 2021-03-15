@@ -5,6 +5,7 @@ extern crate core;
 extern crate gl;
 extern crate libc;
 extern crate num;
+extern crate sdl2;
 
 pub mod bspfile;
 
@@ -48,6 +49,7 @@ pub mod mathlib;
 
 pub mod net;
 pub mod net_defs;
+pub mod net_main;
 pub mod net_sys;
 pub mod protocol;
 
@@ -59,6 +61,9 @@ pub mod spritegn;
 
 pub mod strl;
 pub use strl::capi::*;
+
+pub mod sys_sdl_win;
+pub use sys_sdl_win::capi::*;
 
 pub mod wad;
 pub use wad::capi::*;
