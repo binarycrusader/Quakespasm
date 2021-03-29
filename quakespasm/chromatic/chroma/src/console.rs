@@ -116,7 +116,7 @@ pub mod capi {
     /// Returns a bar of the desired length, but never wider than the console
     /// includes a newline, unless len >= con_linewidth.
     #[no_mangle]
-    pub unsafe fn Con_Quakebar(len: c_int) -> *const c_char {
+    pub unsafe extern "C" fn Con_Quakebar(len: c_int) -> *const c_char {
         static mut BAR: [c_char; 42] = [0; 42];
 
         let mut nlen = min(len, (BAR.len() - 2) as c_int) as usize;
@@ -137,7 +137,7 @@ pub mod capi {
     }
 
     #[no_mangle]
-    pub unsafe fn Con_Clear_f() {
+    pub unsafe extern "C" fn Con_Clear_f() {
         if !con_text.is_null() {
             let dst = std::slice::from_raw_parts_mut(con_text, con_buffersize as usize);
             for v in dst {
@@ -148,14 +148,14 @@ pub mod capi {
     }
 
     #[no_mangle]
-    pub unsafe fn Con_ClearNotify() {
+    pub unsafe extern "C" fn Con_ClearNotify() {
         for v in &mut con_times {
             *v = 0.0;
         }
     }
 
     #[no_mangle]
-    pub unsafe fn Con_DebugLog(msg: *const c_char) {
+    pub unsafe extern "C" fn Con_DebugLog(msg: *const c_char) {
         if log_fd == -1 {
             return;
         }
@@ -175,7 +175,7 @@ pub mod capi {
     }
 
     #[no_mangle]
-    pub unsafe fn Con_Linefeed() {
+    pub unsafe extern "C" fn Con_Linefeed() {
         if con_backscroll != 0 {
             con_backscroll += 1
         }
@@ -197,7 +197,7 @@ pub mod capi {
     }
 
     #[no_mangle]
-    pub unsafe fn Con_MessageMode_f() {
+    pub unsafe extern "C" fn Con_MessageMode_f() {
         if cls.state != CActiveT::Connected || cls.demoplayback == QBoolean::True {
             return;
         }
@@ -207,7 +207,7 @@ pub mod capi {
     }
 
     #[no_mangle]
-    pub unsafe fn Con_MessageMode2_f() {
+    pub unsafe extern "C" fn Con_MessageMode2_f() {
         if cls.state != CActiveT::Connected || cls.demoplayback == QBoolean::True {
             return;
         }
@@ -217,7 +217,7 @@ pub mod capi {
     }
 
     #[no_mangle]
-    pub unsafe fn LOG_Close() {
+    pub unsafe extern "C" fn LOG_Close() {
         if log_fd != -1 {
             libc::close(log_fd);
             log_fd = -1;

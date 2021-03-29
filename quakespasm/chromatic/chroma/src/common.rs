@@ -131,13 +131,14 @@ pub mod capi {
     use libc::size_t;
     use net_main::capi::net_message;
     use std::ffi::CStr;
-    use std::os::raw::{c_char, c_float, c_int, c_short, c_ushort, c_void};
+    use std::os::raw::{c_char, c_float, c_int, c_short, c_ushort, c_void, c_uint, c_double};
     use std::ptr::{null, null_mut};
     use std::slice;
     use SizeBufT;
     use {cvar_null_string, q_strlcpy};
     use {LinkT, CMDLINE_LENGTH};
     use {QBoolean, MAX_NUM_ARGVS};
+    use protocol::RMQProtocolFlags;
 
     #[no_mangle]
     pub static mut largv: [*mut c_char; MAX_NUM_ARGVS + 1] = [null_mut(); MAX_NUM_ARGVS + 1];
@@ -220,21 +221,21 @@ pub mod capi {
 
     // ClearLink is used for new headnodes
     #[no_mangle]
-    pub unsafe fn ClearLink(l: *mut LinkT) {
+    pub unsafe extern"C" fn ClearLink(l: *mut LinkT) {
         let link = &mut *l;
         link.prev = l;
         link.next = l;
     }
 
     #[no_mangle]
-    pub unsafe fn RemoveLink(l: *mut LinkT) {
+    pub unsafe extern "C" fn RemoveLink(l: *mut LinkT) {
         let link = &mut *l;
         (*link.next).prev = link.prev;
         (*link.prev).next = link.next;
     }
 
     #[no_mangle]
-    pub unsafe fn InsertLinkBefore(l: *mut LinkT, b: *mut LinkT) {
+    pub unsafe extern "C" fn InsertLinkBefore(l: *mut LinkT, b: *mut LinkT) {
         let link = &mut *l;
         let before = &mut *b;
         link.next = before;
@@ -416,6 +417,57 @@ pub mod capi {
         }
 
         return unsafe { string.as_ptr() };
+    }
+
+    // original behavior, 13.3 fixed point coords, max range +-4096
+    #[no_mangle]
+    pub extern "C" fn MSG_ReadCoord16() -> c_float
+    {
+        return ((MSG_ReadShort() as c_double) * (1.0 / 8.0)) as c_float;
+    }
+
+    // 16.8 fixed point coords, max range +-32768
+    #[no_mangle]
+    pub extern "C" fn MSG_ReadCoord24() -> c_float
+    {
+        return ((MSG_ReadShort() as c_double) + (MSG_ReadByte() as c_double) * (1.0 / 255.0)) as c_float;
+    }
+
+    #[no_mangle]
+    pub extern "C" fn MSG_ReadCoord(flags: c_uint) -> c_float
+    {
+        let protoflags = RMQProtocolFlags::from_bits_truncate(flags);
+        if protoflags.contains(RMQProtocolFlags::FloatCoord) {
+            return MSG_ReadFloat();
+        } else if protoflags.contains(RMQProtocolFlags::Int32Coord) {
+            return ((MSG_ReadLong() as c_double) * (1.0 / 16.0)) as c_float;
+        } else if protoflags.contains(RMQProtocolFlags::F24bitCoord) {
+            return MSG_ReadCoord24();
+        }
+        return MSG_ReadCoord16();
+    }
+
+    #[no_mangle]
+    pub extern "C" fn MSG_ReadAngle(flags: c_uint) -> c_float
+    {
+        let protoflags = RMQProtocolFlags::from_bits_truncate(flags);
+        if protoflags.contains(RMQProtocolFlags::FloatAngle) {
+            return MSG_ReadFloat();
+        } else if protoflags.contains(RMQProtocolFlags::ShortAngle) {
+            return ((MSG_ReadShort() as c_double) * (360.0 / 65536.0)) as c_float;
+        }
+        return ((MSG_ReadChar() as c_double) * (360.0 / 256.0)) as c_float;
+    }
+
+    // for PROTOCOL_FITZQUAKE
+    #[no_mangle]
+    pub extern "C" fn MSG_ReadAngle16(flags: c_uint) -> c_float
+    {
+        let protoflags = RMQProtocolFlags::from_bits_truncate(flags);
+        if protoflags.contains(RMQProtocolFlags::FloatAngle) {
+            return MSG_ReadFloat();
+        }
+        return ((MSG_ReadShort() as c_double) * (360.0 / 65536.0)) as c_float;
     }
 
     /*
@@ -666,7 +718,7 @@ pub mod capi {
     }
 
     #[no_mangle]
-    pub unsafe fn Q_strncmp(s1: *const c_char, s2: *const c_char, count: c_int) -> c_int {
+    pub unsafe extern "C" fn Q_strncmp(s1: *const c_char, s2: *const c_char, count: c_int) -> c_int {
         let mut p1 = s1;
         let mut p2 = s2;
         let mut rem = count;

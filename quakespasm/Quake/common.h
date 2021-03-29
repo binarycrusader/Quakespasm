@@ -119,9 +119,9 @@ extern int MSG_ReadLong (void);
 extern float MSG_ReadFloat (void);
 extern const char *MSG_ReadString (void);
 
-float MSG_ReadCoord (unsigned int flags);
-float MSG_ReadAngle (unsigned int flags);
-float MSG_ReadAngle16 (unsigned int flags); //johnfitz
+extern float MSG_ReadCoord (unsigned int flags);
+extern float MSG_ReadAngle (unsigned int flags);
+extern float MSG_ReadAngle16 (unsigned int flags); //johnfitz
 
 //============================================================================
 

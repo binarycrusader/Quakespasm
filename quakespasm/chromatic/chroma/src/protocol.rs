@@ -39,7 +39,7 @@ bitflags! {
     /// PROTOCOL_RMQ protocol flags
     pub struct RMQProtocolFlags: c_uint {
         const None = 0;
-        const Shortangle = 1 << 1;
+        const ShortAngle = 1 << 1;
         const FloatAngle = 1 << 2;
         const F24bitCoord = 1 << 3;
         const FloatCoord = 1 << 4;

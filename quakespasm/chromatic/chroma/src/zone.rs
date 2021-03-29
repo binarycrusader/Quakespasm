@@ -234,13 +234,13 @@ pub mod capi {
     pub static mut hunk_tempmark: c_int = 0;
 
     #[no_mangle]
-    pub unsafe fn Hunk_LowMark() -> c_int {
+    pub unsafe extern "C" fn Hunk_LowMark() -> c_int {
         return hunk_low_used;
     }
 
     //============================================================================
     #[no_mangle]
-    pub unsafe fn Memory_InitZone(zone: *mut MemZoneT, size: c_int) {
+    pub unsafe extern "C" fn Memory_InitZone(zone: *mut MemZoneT, size: c_int) {
         let block = (zone as *mut Byte).offset(size_of::<MemZoneT>() as isize) as *mut MemBlockT;
 
         // set the entire zone to one free block

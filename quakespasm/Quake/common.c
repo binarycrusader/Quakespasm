@@ -269,51 +269,6 @@ void MSG_WriteAngle16 (sizebuf_t *sb, float f, unsigned int flags)
 }
 //johnfitz
 
-//
-// reading functions
-//
-
-//johnfitz -- original behavior, 13.3 fixed point coords, max range +-4096
-float MSG_ReadCoord16 (void)
-{
-	return MSG_ReadShort() * (1.0/8);
-}
-
-//johnfitz -- 16.8 fixed point coords, max range +-32768
-float MSG_ReadCoord24 (void)
-{
-	return MSG_ReadShort() + MSG_ReadByte() * (1.0/255);
-}
-
-float MSG_ReadCoord (unsigned int flags)
-{
-	if (flags & PRFL_FLOATCOORD)
-		return MSG_ReadFloat ();
-	else if (flags & PRFL_INT32COORD)
-		return MSG_ReadLong () * (1.0 / 16.0);
-	else if (flags & PRFL_24BITCOORD)
-		return MSG_ReadCoord24 ();
-	else return MSG_ReadCoord16 ();
-}
-
-float MSG_ReadAngle (unsigned int flags)
-{
-	if (flags & PRFL_FLOATANGLE)
-		return MSG_ReadFloat ();
-	else if (flags & PRFL_SHORTANGLE)
-		return MSG_ReadShort () * (360.0 / 65536);
-	else return MSG_ReadChar () * (360.0 / 256);
-}
-
-//johnfitz -- for PROTOCOL_FITZQUAKE
-float MSG_ReadAngle16 (unsigned int flags)
-{
-	if (flags & PRFL_FLOATANGLE)
-		return MSG_ReadFloat ();	// make sure
-	else return MSG_ReadShort () * (360.0 / 65536);
-}
-//johnfitz
-
 //===========================================================================
 
 void SZ_Alloc (sizebuf_t *buf, int startsize)

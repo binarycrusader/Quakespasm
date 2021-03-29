@@ -128,7 +128,7 @@ pub mod capi {
     //==============================================================================
 
     #[no_mangle]
-    pub unsafe fn Cvar_FindVar(var_name: *const c_char) -> *mut CVarT {
+    pub unsafe extern "C" fn Cvar_FindVar(var_name: *const c_char) -> *mut CVarT {
         let find_str = CStr::from_ptr(var_name);
 
         let mut var = cvar_vars;
@@ -145,7 +145,7 @@ pub mod capi {
     }
 
     #[no_mangle]
-    pub unsafe fn Cvar_FindVarAfter(prev_name: *const c_char, with_flags: CVarFlags) -> *mut CVarT {
+    pub unsafe extern "C" fn Cvar_FindVarAfter(prev_name: *const c_char, with_flags: CVarFlags) -> *mut CVarT {
         let mut var;
 
         if !prev_name.is_null() && *prev_name != 0 {
@@ -176,7 +176,7 @@ pub mod capi {
     }
 
     #[no_mangle]
-    pub unsafe fn Cvar_VariableString(var_name: *const c_char) -> *const c_char {
+    pub unsafe extern "C" fn Cvar_VariableString(var_name: *const c_char) -> *const c_char {
         if let Some(var) = Cvar_FindVar(var_name).as_ref() {
             return (&*var).string;
         }
@@ -184,7 +184,7 @@ pub mod capi {
     }
 
     #[no_mangle]
-    pub unsafe fn Cvar_VariableValue(var_name: *const c_char) -> c_float {
+    pub unsafe extern "C" fn Cvar_VariableValue(var_name: *const c_char) -> c_float {
         if let Some(var) = Cvar_FindVar(var_name).as_ref() {
             return crate::Q_atof((&*var).string);
         }
@@ -192,7 +192,7 @@ pub mod capi {
     }
 
     #[no_mangle]
-    pub unsafe fn Cvar_SetCallback(var: *mut CVarT, func: CVarCallbackT) {
+    pub unsafe extern "C" fn Cvar_SetCallback(var: *mut CVarT, func: CVarCallbackT) {
         (&mut *var).callback = func;
         if func.is_some() {
             (&mut *var).flags |= CVarFlags::Callback;
@@ -210,7 +210,7 @@ pub mod capi {
     ============
     */
     #[no_mangle]
-    pub unsafe fn Cvar_WriteVariables(f: *mut FILE) {
+    pub unsafe extern "C" fn Cvar_WriteVariables(f: *mut FILE) {
         let fd = fileno(f);
         let h = get_osfhandle(fd) as HANDLE;
         let mut file = File::from_raw_handle(h);
