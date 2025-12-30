@@ -22,9 +22,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 // sound.rs -- client sound i/o functions
 
+use crate::zone::CacheUserT;
+use crate::MAX_QPATH;
 use std::os::raw::{c_char, c_int};
-use zone::CacheUserT;
-use MAX_QPATH;
 
 #[repr(C)]
 pub struct PortableSamplePairT {

@@ -21,11 +21,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 // gl_texmgr.rs -- fitzquake's texture manager. manages opengl texture images
 
+use crate::gl_model::QModelT;
+use crate::MAX_QPATH;
 use gl::types::*;
-use gl_model::QModelT;
 use std::os::raw::{c_char, c_int, c_schar, c_uint, c_ushort};
 use std::ptr::null_mut;
-use MAX_QPATH;
 
 bitflags! {
     #[derive(Default)]

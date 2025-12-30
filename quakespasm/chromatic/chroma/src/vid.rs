@@ -23,9 +23,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 // vid.rs -- video driver defs
 
+use crate::Byte;
 use std::os::raw::c_int;
 use std::ptr::null_mut;
-use Byte;
 
 pub const VID_CBITS: usize = 6;
 pub const VID_GRADES: usize = 1 << VID_CBITS;

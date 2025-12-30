@@ -23,42 +23,42 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #[allow(bad_style)]
 pub mod capi {
-    use crate::MAX_LIGHTSTYLES;
-    use client::{
+    use crate::client::{
         ClientStateT, ClientStaticT, DlightT, LightstyleT, MAX_DLIGHTS, MAX_STATIC_ENTITIES,
         MAX_VISEDICTS,
     };
-    use render::EntityT;
+    use crate::render::EntityT;
+    use crate::MAX_LIGHTSTYLES;
     use std::os::raw::c_int;
     use std::ptr::null_mut;
 
-    #[no_mangle]
+    #[unsafe(no_mangle)]
     pub static mut cls: ClientStaticT = ClientStaticT::default();
 
-    #[no_mangle]
+    #[unsafe(no_mangle)]
     pub static mut cl: ClientStateT = ClientStateT::default();
 
     // FIXME: put these on hunk?
-    #[no_mangle]
+    #[unsafe(no_mangle)]
     pub static mut cl_static_entities: [EntityT; MAX_STATIC_ENTITIES] =
         [EntityT::default(); MAX_STATIC_ENTITIES];
 
-    #[no_mangle]
+    #[unsafe(no_mangle)]
     pub static mut cl_lightstyle: [LightstyleT; MAX_LIGHTSTYLES] =
         [LightstyleT::default(); MAX_LIGHTSTYLES];
 
-    #[no_mangle]
+    #[unsafe(no_mangle)]
     pub static mut cl_dlights: [DlightT; MAX_DLIGHTS] = [DlightT::default(); MAX_DLIGHTS];
 
     /// was static array; now on hunk
-    #[no_mangle]
+    #[unsafe(no_mangle)]
     pub static mut cl_entities: *mut EntityT = null_mut();
     /// only changes when new map loads
-    #[no_mangle]
+    #[unsafe(no_mangle)]
     pub static mut cl_max_edicts: c_int = 0;
 
-    #[no_mangle]
+    #[unsafe(no_mangle)]
     pub static mut cl_numvisedicts: c_int = 0;
-    #[no_mangle]
+    #[unsafe(no_mangle)]
     pub static mut cl_visedicts: [*mut EntityT; MAX_VISEDICTS] = [null_mut(); MAX_VISEDICTS];
 }

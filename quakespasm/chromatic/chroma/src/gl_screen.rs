@@ -73,17 +73,17 @@ console is:
 pub mod capi {
     use std::os::raw::{c_float, c_int};
 
-    #[no_mangle]
+    #[unsafe(no_mangle)]
     pub static mut glx: c_int = 0;
-    #[no_mangle]
+    #[unsafe(no_mangle)]
     pub static mut gly: c_int = 0;
-    #[no_mangle]
+    #[unsafe(no_mangle)]
     pub static mut glwidth: c_int = 0;
-    #[no_mangle]
+    #[unsafe(no_mangle)]
     pub static mut glheight: c_int = 0;
 
-    #[no_mangle]
+    #[unsafe(no_mangle)]
     pub static mut scr_con_current: c_float = 0.0;
-    #[no_mangle]
+    #[unsafe(no_mangle)]
     pub static mut scr_conlines: c_float = 0.0; // lines of console to display
 }

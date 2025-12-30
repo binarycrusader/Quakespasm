@@ -19,7 +19,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
 
-use modelgen::SyncTypeT;
+use crate::modelgen::SyncTypeT;
 use std::os::raw::{c_float, c_int};
 
 //

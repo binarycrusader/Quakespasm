@@ -54,38 +54,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #endif
 
-static void Sys_AtExit (void)
-{
-	SDL_Quit();
-}
-
-static void Sys_InitSDL (void)
-{
-#if defined(USE_SDL2)
-	SDL_version v;
-	SDL_version *sdl_version = &v;
-	SDL_GetVersion(&v);
-#else
-	const SDL_version *sdl_version = SDL_Linked_Version();
-#endif
-
-	Sys_Printf("Found SDL version %i.%i.%i\n",sdl_version->major,sdl_version->minor,sdl_version->patch);
-	if (SDL_VERSIONNUM(sdl_version->major,sdl_version->minor,sdl_version->patch) < SDL_REQUIREDVERSION)
-	{	/*reject running under older SDL versions */
-		Sys_Error("You need at least v%d.%d.%d of SDL to run this game.", SDL_MIN_X,SDL_MIN_Y,SDL_MIN_Z);
-	}
-	if (SDL_VERSIONNUM(sdl_version->major,sdl_version->minor,sdl_version->patch) >= SDL_NEW_VERSION_REJECT)
-	{	/*reject running under newer (1.3.x) SDL */
-		Sys_Error("Your version of SDL library is incompatible with me.\n"
-			  "You need a library version in the line of %d.%d.%d\n", SDL_MIN_X,SDL_MIN_Y,SDL_MIN_Z);
-	}
-
-	if (SDL_Init(0) < 0)
-	{
-		Sys_Error("Couldn't init SDL: %s", SDL_GetError());
-	}
-	atexit(Sys_AtExit);
-}
+void Sys_InitSDL (void);
 
 #define DEFAULT_MEMORY (256 * 1024 * 1024) // ericw -- was 72MB (64-bit) / 64MB (32-bit)
 

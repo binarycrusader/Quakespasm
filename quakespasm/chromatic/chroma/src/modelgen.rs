@@ -19,8 +19,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
 
+use crate::{Byte, Vec3T};
 use std::os::raw::{c_char, c_float, c_int};
-use {Byte, Vec3T};
 
 //
 // modelgen.rs: header file for model generation program

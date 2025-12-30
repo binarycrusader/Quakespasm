@@ -232,7 +232,7 @@ void COM_CloseFile (int h);
 // procedures differ by their buffer allocation method.
 byte *COM_LoadStackFile (const char *path, void *buffer, int bufsize,
 						unsigned int *path_id);
-	// uses the specified stack stack buffer with the specified size
+	// uses the specified stack buffer with the specified size
 	// of bufsize. if bufsize is too short, uses temp hunk. the bufsize
 	// must include the +1
 byte *COM_LoadTempFile (const char *path, unsigned int *path_id);

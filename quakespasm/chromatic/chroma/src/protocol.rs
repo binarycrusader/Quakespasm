@@ -22,10 +22,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 // protocol.rs -- communications protocols
 
-use mathlib::q_rint;
+use crate::mathlib::q_rint;
+use crate::Vec3T;
 use num::clamp;
 use std::os::raw::{c_float, c_int, c_uchar, c_uint, c_ushort};
-use Vec3T;
 
 /// standard quake protocol
 pub const PROTOCOL_NETQUAKE: u32 = 15;

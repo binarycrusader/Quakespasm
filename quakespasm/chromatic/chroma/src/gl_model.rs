@@ -27,19 +27,19 @@ m*_t structures are in-memory
 
 // entity effects
 
-use bspfile::{DModelT, MAXLIGHTMAPS, MAX_MAP_HULLS, MIPLEVELS, NUM_AMBIENTS};
-use client::MAX_DLIGHTS_BITS;
+use crate::bspfile::{DModelT, MAXLIGHTMAPS, MAX_MAP_HULLS, MIPLEVELS, NUM_AMBIENTS};
+use crate::client::MAX_DLIGHTS_BITS;
+use crate::gl_texmgr::GlTextureT;
+use crate::modelgen::{SyncTypeT, TriVertexT};
+use crate::render::EFragT;
+use crate::spritegn::SpriteFrameTypeT;
+use crate::zone::CacheUserT;
+use crate::VecT;
+use crate::{Byte, QBoolean, Vec3T, MAX_QPATH};
 use gl::types::*;
-use gl_texmgr::GlTextureT;
 use libc::intptr_t;
-use modelgen::{SyncTypeT, TriVertexT};
-use render::EFragT;
-use spritegn::SpriteFrameTypeT;
 use std::os::raw::{c_char, c_float, c_int, c_schar, c_short, c_uint, c_ushort};
 use std::ptr::null_mut;
-use zone::CacheUserT;
-use VecT;
-use {Byte, QBoolean, Vec3T, MAX_QPATH};
 
 bitflags! {
     #[derive(Default)]

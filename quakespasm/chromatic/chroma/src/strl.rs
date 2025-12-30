@@ -23,7 +23,7 @@ pub mod capi {
      * will be copied.  Always NUL terminates (unless siz == 0).
      * Returns strlen(src); if retval >= siz, truncation occurred.
      */
-    #[no_mangle]
+    #[unsafe(no_mangle)]
     pub extern "C" fn q_strlcpy(dst: *mut c_char, src: *const c_char, siz: size_t) -> size_t {
         let src_strlen = unsafe { libc::strlen(src) };
         let src_slice = unsafe { slice::from_raw_parts(src, src_strlen + 1) };
@@ -48,7 +48,7 @@ pub mod capi {
      * Returns strlen(src) + MIN(siz, strlen(initial dst)).
      * If retval >= siz, truncation occurred.
      */
-    #[no_mangle]
+    #[unsafe(no_mangle)]
     pub extern "C" fn q_strlcat(dst: *mut c_char, src: *const c_char, siz: size_t) -> size_t {
         let dst_slice = unsafe { slice::from_raw_parts_mut(dst, siz) };
 

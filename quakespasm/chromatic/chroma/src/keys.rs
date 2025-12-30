@@ -40,47 +40,47 @@ pub const CMDLINES: usize = 64;
 
 pub mod capi {
     use super::{CMDLINES, MAXCMDLINE, MAX_KEYS};
-    use keys::KeydestT;
+    use crate::keys::KeydestT;
+    use crate::QBoolean;
     use std::os::raw::{c_char, c_double, c_int};
     use std::ptr::null_mut;
-    use QBoolean;
 
-    #[no_mangle]
+    #[unsafe(no_mangle)]
     pub static mut key_lines: [[c_char; CMDLINES]; MAXCMDLINE] = [[0; CMDLINES]; MAXCMDLINE];
 
-    #[no_mangle]
+    #[unsafe(no_mangle)]
     pub static mut key_linepos: c_int = 0;
     /// -- insert key toggle (for editing)
-    #[no_mangle]
+    #[unsafe(no_mangle)]
     pub static mut key_insert: c_int = 0;
     /// fudge cursor blinking to make it easier to spot in certain cases
-    #[no_mangle]
+    #[unsafe(no_mangle)]
     pub static mut key_blinktime: c_double = 0.0;
 
-    #[no_mangle]
+    #[unsafe(no_mangle)]
     pub static mut edit_line: c_int = 0;
-    #[no_mangle]
+    #[unsafe(no_mangle)]
     pub static mut history_line: c_int = 0;
 
-    #[no_mangle]
+    #[unsafe(no_mangle)]
     pub static mut key_dest: KeydestT = KeydestT::KeyGame;
 
-    #[no_mangle]
+    #[unsafe(no_mangle)]
     pub static mut keybindings: [*mut c_char; MAX_KEYS] = [null_mut(); MAX_KEYS];
 
     /// if true, can't be rebound while in console
-    #[no_mangle]
+    #[unsafe(no_mangle)]
     pub static mut consolekeys: [QBoolean; MAX_KEYS] = [QBoolean::False; MAX_KEYS];
     /// if true, can't be rebound while in menu
-    #[no_mangle]
+    #[unsafe(no_mangle)]
     pub static mut menubound: [QBoolean; MAX_KEYS] = [QBoolean::False; MAX_KEYS];
-    #[no_mangle]
+    #[unsafe(no_mangle)]
     pub static mut keydown: [QBoolean; MAX_KEYS] = [QBoolean::False; MAX_KEYS];
 
-    #[no_mangle]
+    #[unsafe(no_mangle)]
     pub static mut chat_team: QBoolean = QBoolean::False;
-    #[no_mangle]
+    #[unsafe(no_mangle)]
     pub static mut chat_buffer: [c_char; MAXCMDLINE] = [0; MAXCMDLINE];
-    #[no_mangle]
+    #[unsafe(no_mangle)]
     pub static mut chat_bufferlen: c_int = 0;
 }

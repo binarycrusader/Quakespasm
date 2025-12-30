@@ -1,9 +1,15 @@
+[workspace]
+members = ["chroma"]
+
+[workspace.package]
+edition = "2021"
+authors = ["Shawn Walker-Salas <binarycrusader@gmail.com>"]
+
 [package]
 name = "chromatic"
 version = "0.1.0"
-authors = ["Shawn Walker-Salas <binarycrusader@gmail.com>"]
+edition.workspace = true
+authors.workspace = true
 
 [dependencies]
 chroma = { path = "chroma"}
-
-[workspace]

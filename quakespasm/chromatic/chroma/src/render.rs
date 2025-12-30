@@ -19,13 +19,13 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
-use gl_model::QModelT;
-use protocol::EntityStateT;
+use crate::gl_model::QModelT;
+use crate::protocol::EntityStateT;
+use crate::vid::VRectT;
+use crate::QBoolean;
+use crate::{Byte, Vec3T};
 use std::os::raw::{c_double, c_float, c_int, c_short, c_uint};
 use std::ptr::null_mut;
-use vid::VRectT;
-use QBoolean;
-use {Byte, Vec3T};
 
 /// soldier uniform colors
 pub const TOP_RANGE: usize = 16;

@@ -358,11 +358,6 @@ void Sys_Quit (void)
 	exit (0);
 }
 
-double Sys_DoubleTime (void)
-{
-	return SDL_GetTicks() / 1000.0;
-}
-
 const char *Sys_ConsoleInput (void)
 {
 	static char	con_text[256];

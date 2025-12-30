@@ -21,9 +21,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
 // common.rs -- misc functions used in client and server
+use crate::{Byte, QBoolean};
 use std::os::raw::c_int;
 use std::ptr::null_mut;
-use {Byte, QBoolean};
 
 /// if a packfile directory differs from this, it is assumed to be hacked/modified
 
@@ -127,39 +127,39 @@ override an explicit setting on the original command line.
 
 #[allow(bad_style)]
 pub mod capi {
-    use cvar::{CVarFlags, CVarT};
+    use crate::cvar::{CVarFlags, CVarT};
+    use crate::net_main::capi::net_message;
+    use crate::protocol::RMQProtocolFlags;
+    use crate::SizeBufT;
+    use crate::{cvar_null_string, q_strlcpy};
+    use crate::{LinkT, CMDLINE_LENGTH};
+    use crate::{QBoolean, MAX_NUM_ARGVS};
     use libc::size_t;
-    use net_main::capi::net_message;
     use std::ffi::CStr;
-    use std::os::raw::{c_char, c_float, c_int, c_short, c_ushort, c_void, c_uint, c_double};
+    use std::os::raw::{c_char, c_double, c_float, c_int, c_short, c_uint, c_ushort, c_void};
     use std::ptr::{null, null_mut};
     use std::slice;
-    use SizeBufT;
-    use {cvar_null_string, q_strlcpy};
-    use {LinkT, CMDLINE_LENGTH};
-    use {QBoolean, MAX_NUM_ARGVS};
-    use protocol::RMQProtocolFlags;
 
-    #[no_mangle]
+    #[unsafe(no_mangle)]
     pub static mut largv: [*mut c_char; MAX_NUM_ARGVS + 1] = [null_mut(); MAX_NUM_ARGVS + 1];
 
-    #[no_mangle]
+    #[unsafe(no_mangle)]
     pub static argvdummy: &'static [u8] = b" \0";
 
-    #[no_mangle]
+    #[unsafe(no_mangle)]
     pub static mut com_token: [c_char; 1024] = [0; 1024];
 
-    #[no_mangle]
+    #[unsafe(no_mangle)]
     pub static mut com_argc: c_int = 0;
-    #[no_mangle]
+    #[unsafe(no_mangle)]
     pub static mut com_argv: *mut *mut c_char = null_mut();
 
-    #[no_mangle]
+    #[unsafe(no_mangle)]
     pub static mut safemode: c_int = 0;
 
     // CvarFlags::ServerInfo is not set as sending cmdline upon CCREQ_RULE_INFO is unsafe.
     // set to correct value in COM_CheckRegistered()
-    #[no_mangle]
+    #[unsafe(no_mangle)]
     pub static mut registered: CVarT = CVarT {
         name: b"registered\0".as_ptr() as *const c_char,
         string: b"1\0".as_ptr() as *const c_char,
@@ -171,7 +171,7 @@ pub mod capi {
     };
 
     // CvarFlags::ServerInfo is not set as sending cmdline upon CCREQ_RULE_INFO is unsafe.
-    #[no_mangle]
+    #[unsafe(no_mangle)]
     pub static mut cmdline: CVarT = CVarT {
         name: b"cmdline\0".as_ptr() as *const c_char,
         string: b"\0".as_ptr() as *const c_char,
@@ -183,24 +183,24 @@ pub mod capi {
     };
 
     /// True if using non-Id files
-    #[no_mangle]
+    #[unsafe(no_mangle)]
     pub static mut com_modified: QBoolean = QBoolean::False;
 
-    #[no_mangle]
+    #[unsafe(no_mangle)]
     pub static mut fitzmode: QBoolean = QBoolean::False;
 
-    #[no_mangle]
+    #[unsafe(no_mangle)]
     pub static mut com_cmdline: [c_char; CMDLINE_LENGTH] = [0; CMDLINE_LENGTH];
 
-    #[no_mangle]
+    #[unsafe(no_mangle)]
     pub static mut standard_quake: QBoolean = QBoolean::True;
-    #[no_mangle]
+    #[unsafe(no_mangle)]
     pub static mut rogue: QBoolean = QBoolean::False;
-    #[no_mangle]
+    #[unsafe(no_mangle)]
     pub static mut hipnotic: QBoolean = QBoolean::False;
 
     // this graphic needs to be in the pak file to use registered features
-    #[no_mangle]
+    #[unsafe(no_mangle)]
     pub static pop: [c_ushort; 128] = [
         0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x6600,
         0x0000, 0x0000, 0x0000, 0x6600, 0x0000, 0x0000, 0x0066, 0x0000, 0x0000, 0x0000, 0x0000,
@@ -216,25 +216,25 @@ pub mod capi {
         0x0000, 0x0000, 0x0000, 0x6400, 0x0000, 0x0000, 0x0000,
     ];
 
-    #[no_mangle]
+    #[unsafe(no_mangle)]
     pub static mut host_bigendian: QBoolean = QBoolean::False;
 
     // ClearLink is used for new headnodes
-    #[no_mangle]
-    pub unsafe extern"C" fn ClearLink(l: *mut LinkT) {
+    #[unsafe(no_mangle)]
+    pub unsafe extern "C" fn ClearLink(l: *mut LinkT) {
         let link = &mut *l;
         link.prev = l;
         link.next = l;
     }
 
-    #[no_mangle]
+    #[unsafe(no_mangle)]
     pub unsafe extern "C" fn RemoveLink(l: *mut LinkT) {
         let link = &mut *l;
         (*link.next).prev = link.prev;
         (*link.prev).next = link.next;
     }
 
-    #[no_mangle]
+    #[unsafe(no_mangle)]
     pub unsafe extern "C" fn InsertLinkBefore(l: *mut LinkT, b: *mut LinkT) {
         let link = &mut *l;
         let before = &mut *b;
@@ -251,32 +251,32 @@ pub mod capi {
 
     ============================================================================
     */
-    #[no_mangle]
+    #[unsafe(no_mangle)]
     pub extern "C" fn ShortSwap(l: c_short) -> c_short {
         return l.swap_bytes();
     }
 
-    #[no_mangle]
+    #[unsafe(no_mangle)]
     pub extern "C" fn ShortNoSwap(l: c_short) -> c_short {
         return l;
     }
 
-    #[no_mangle]
+    #[unsafe(no_mangle)]
     pub extern "C" fn LongSwap(l: c_int) -> c_int {
         return l.swap_bytes();
     }
 
-    #[no_mangle]
+    #[unsafe(no_mangle)]
     pub extern "C" fn LongNoSwap(l: c_int) -> c_int {
         return l;
     }
 
-    #[no_mangle]
+    #[unsafe(no_mangle)]
     pub extern "C" fn FloatSwap(f: c_float) -> c_float {
         return f.to_bits().swap_bytes() as f32;
     }
 
-    #[no_mangle]
+    #[unsafe(no_mangle)]
     pub extern "C" fn FloatNoSwap(f: c_float) -> c_float {
         return f;
     }
@@ -293,12 +293,12 @@ pub mod capi {
     //
     // reading functions
     //
-    #[no_mangle]
+    #[unsafe(no_mangle)]
     pub static mut msg_readcount: c_int = 0;
-    #[no_mangle]
+    #[unsafe(no_mangle)]
     pub static mut msg_badread: QBoolean = QBoolean::False;
 
-    #[no_mangle]
+    #[unsafe(no_mangle)]
     pub extern "C" fn MSG_BeginReading() {
         unsafe {
             msg_readcount = 0;
@@ -307,7 +307,7 @@ pub mod capi {
     }
 
     /// returns -1 and sets msg_badread if no more characters are available
-    #[no_mangle]
+    #[unsafe(no_mangle)]
     pub extern "C" fn MSG_ReadChar() -> c_int {
         let readcount = unsafe { msg_readcount } as usize;
         let cursize = unsafe { net_message.cursize } as usize;
@@ -324,7 +324,7 @@ pub mod capi {
         return c;
     }
 
-    #[no_mangle]
+    #[unsafe(no_mangle)]
     pub extern "C" fn MSG_ReadByte() -> c_int {
         let readcount = unsafe { msg_readcount } as usize;
         let cursize = unsafe { net_message.cursize } as usize;
@@ -339,7 +339,7 @@ pub mod capi {
         return c;
     }
 
-    #[no_mangle]
+    #[unsafe(no_mangle)]
     pub extern "C" fn MSG_ReadShort() -> c_int {
         let readcount = unsafe { msg_readcount } as usize;
         let cursize = unsafe { net_message.cursize } as usize;
@@ -348,15 +348,14 @@ pub mod capi {
             return -1;
         }
 
-        let net_message_data =
-            unsafe { slice::from_raw_parts(net_message.data, cursize) };
+        let net_message_data = unsafe { slice::from_raw_parts(net_message.data, cursize) };
         let c = ((net_message_data[readcount] as c_int)
             + ((net_message_data[readcount + 1] as c_int) << 8)) as c_short;
         unsafe { msg_readcount += 2 };
         return c as c_int;
     }
 
-    #[no_mangle]
+    #[unsafe(no_mangle)]
     pub extern "C" fn MSG_ReadLong() -> c_int {
         let readcount = unsafe { msg_readcount } as usize;
         let cursize = unsafe { net_message.cursize } as usize;
@@ -365,8 +364,7 @@ pub mod capi {
             return -1;
         }
 
-        let net_message_data =
-            unsafe { slice::from_raw_parts(net_message.data, cursize) };
+        let net_message_data = unsafe { slice::from_raw_parts(net_message.data, cursize) };
         let c = ((net_message_data[readcount] as c_int)
             + ((net_message_data[readcount + 1] as c_int) << 8)
             + ((net_message_data[readcount + 2] as c_int) << 16)
@@ -375,7 +373,7 @@ pub mod capi {
         return c as c_int;
     }
 
-    #[no_mangle]
+    #[unsafe(no_mangle)]
     pub extern "C" fn MSG_ReadFloat() -> c_float {
         let readcount = unsafe { msg_readcount } as usize;
         let cursize = unsafe { net_message.cursize } as usize;
@@ -396,46 +394,49 @@ pub mod capi {
         return c;
     }
 
-    #[no_mangle]
+    #[unsafe(no_mangle)]
     pub extern "C" fn MSG_ReadString() -> *const c_char {
-        static mut string: [c_char; 2048] = [0; 2048];
-        if let Some((last_c, dest_c)) = unsafe { string.split_last_mut() } {
-            for dc in dest_c.iter_mut() {
-                let c = MSG_ReadByte() as c_char;
-                match c {
-                    -1 | 0 => {
-                        *dc = b'\0' as c_char;
-                        return unsafe { string.as_ptr() };
-                    }
-                    _ => {
-                        *dc = c;
-                    }
-                };
-            }
-
-            *last_c = b'\0' as c_char;
+        thread_local! {
+            static STRING: std::cell::RefCell<[c_char; 2048]> = const { std::cell::RefCell::new([0; 2048]) };
         }
 
-        return unsafe { string.as_ptr() };
+        STRING.with_borrow_mut(|string| {
+            string[0] = b'\0' as c_char;
+            if let Some((last_c, dest_c)) = string.split_last_mut() {
+                for dc in dest_c.iter_mut() {
+                    let c = MSG_ReadByte() as c_char;
+                    match c {
+                        -1 | 0 => {
+                            *dc = b'\0' as c_char;
+                            return string.as_ptr();
+                        }
+                        _ => {
+                            *dc = c;
+                        }
+                    };
+                }
+
+                *last_c = b'\0' as c_char;
+            }
+            string.as_ptr()
+        })
     }
 
     // original behavior, 13.3 fixed point coords, max range +-4096
-    #[no_mangle]
-    pub extern "C" fn MSG_ReadCoord16() -> c_float
-    {
+    #[unsafe(no_mangle)]
+    pub extern "C" fn MSG_ReadCoord16() -> c_float {
         return ((MSG_ReadShort() as c_double) * (1.0 / 8.0)) as c_float;
     }
 
     // 16.8 fixed point coords, max range +-32768
-    #[no_mangle]
-    pub extern "C" fn MSG_ReadCoord24() -> c_float
-    {
-        return ((MSG_ReadShort() as c_double) + (MSG_ReadByte() as c_double) * (1.0 / 255.0)) as c_float;
+    #[unsafe(no_mangle)]
+    pub extern "C" fn MSG_ReadCoord24() -> c_float {
+        return ((MSG_ReadShort() as c_double) + (MSG_ReadByte() as c_double) * (1.0 / 255.0))
+            as c_float;
     }
 
-    #[no_mangle]
-    pub extern "C" fn MSG_ReadCoord(flags: c_uint) -> c_float
-    {
+    #[unsafe(no_mangle)]
+    pub extern "C" fn MSG_ReadCoord(flags: c_uint) -> c_float {
         let protoflags = RMQProtocolFlags::from_bits_truncate(flags);
         if protoflags.contains(RMQProtocolFlags::FloatCoord) {
             return MSG_ReadFloat();
@@ -447,9 +448,8 @@ pub mod capi {
         return MSG_ReadCoord16();
     }
 
-    #[no_mangle]
-    pub extern "C" fn MSG_ReadAngle(flags: c_uint) -> c_float
-    {
+    #[unsafe(no_mangle)]
+    pub extern "C" fn MSG_ReadAngle(flags: c_uint) -> c_float {
         let protoflags = RMQProtocolFlags::from_bits_truncate(flags);
         if protoflags.contains(RMQProtocolFlags::FloatAngle) {
             return MSG_ReadFloat();
@@ -460,9 +460,8 @@ pub mod capi {
     }
 
     // for PROTOCOL_FITZQUAKE
-    #[no_mangle]
-    pub extern "C" fn MSG_ReadAngle16(flags: c_uint) -> c_float
-    {
+    #[unsafe(no_mangle)]
+    pub extern "C" fn MSG_ReadAngle16(flags: c_uint) -> c_float {
         let protoflags = RMQProtocolFlags::from_bits_truncate(flags);
         if protoflags.contains(RMQProtocolFlags::FloatAngle) {
             return MSG_ReadFloat();
@@ -477,7 +476,7 @@ pub mod capi {
 
     ============================================================================
     */
-    #[no_mangle]
+    #[unsafe(no_mangle)]
     pub extern "C" fn q_strncasecmp(s1: *const c_char, s2: *const c_char, n: size_t) -> c_int {
         if s1 == s2 || n == 0 {
             return 0;
@@ -502,7 +501,7 @@ pub mod capi {
         return 0;
     }
 
-    #[no_mangle]
+    #[unsafe(no_mangle)]
     pub extern "C" fn q_strcasecmp(s1: *const c_char, s2: *const c_char) -> c_int {
         if s1 == s2 {
             return 0;
@@ -524,7 +523,7 @@ pub mod capi {
         return 0;
     }
 
-    #[no_mangle]
+    #[unsafe(no_mangle)]
     pub extern "C" fn q_strcasestr(
         haystack: *const c_char,
         needle: *const c_char,
@@ -557,7 +556,7 @@ pub mod capi {
         return null(); // didn't find it
     }
 
-    #[no_mangle]
+    #[unsafe(no_mangle)]
     pub extern "C" fn Q_atof(str: *const c_char) -> c_float {
         let mut cstr = unsafe { CStr::from_ptr(str) };
 
@@ -625,7 +624,7 @@ pub mod capi {
         }
     }
 
-    #[no_mangle]
+    #[unsafe(no_mangle)]
     pub extern "C" fn Q_memset(dest: *mut c_void, fill: c_int, count: size_t) {
         // TODO: Replace with dest_slice.fill() in rust 1.50+
         let dest_slice = unsafe { slice::from_raw_parts_mut(dest as *mut u8, count) };
@@ -634,14 +633,14 @@ pub mod capi {
         }
     }
 
-    #[no_mangle]
+    #[unsafe(no_mangle)]
     pub extern "C" fn Q_memcpy(dest: *mut c_void, src: *const c_void, count: size_t) {
         let src_slice = unsafe { slice::from_raw_parts_mut(src as *mut u8, count) };
         let dest_slice = unsafe { slice::from_raw_parts_mut(dest as *mut u8, count) };
         dest_slice.copy_from_slice(src_slice)
     }
 
-    #[no_mangle]
+    #[unsafe(no_mangle)]
     pub extern "C" fn Q_strcpy(dest: *mut c_char, src: *const c_char) {
         let src_str = unsafe { CStr::from_ptr(src) };
         let src_str_slice = src_str.to_bytes_with_nul();
@@ -651,7 +650,7 @@ pub mod capi {
         dst_str_slice.copy_from_slice(src_str_slice);
     }
 
-    #[no_mangle]
+    #[unsafe(no_mangle)]
     pub extern "C" fn Q_strncpy(dest: *mut c_char, src: *const c_char, count: c_int) {
         let src_str = unsafe { CStr::from_ptr(src) };
         let mut src_str_slice = src_str.to_bytes_with_nul();
@@ -667,13 +666,13 @@ pub mod capi {
         dst_str_slice.copy_from_slice(src_str_slice);
     }
 
-    #[no_mangle]
+    #[unsafe(no_mangle)]
     pub extern "C" fn Q_strlen(str: *const c_char) -> c_int {
         let s = unsafe { CStr::from_ptr(str) };
         s.to_bytes().len() as c_int
     }
 
-    #[no_mangle]
+    #[unsafe(no_mangle)]
     pub extern "C" fn Q_strrchr(s: *const c_char, c: c_char) -> *const c_char {
         let str = unsafe { CStr::from_ptr(s) };
         let str_slice = str.to_bytes();
@@ -683,7 +682,7 @@ pub mod capi {
             .map_or(null(), |pos| unsafe { s.add(pos) })
     }
 
-    #[no_mangle]
+    #[unsafe(no_mangle)]
     pub extern "C" fn Q_strcat(dest: *mut c_char, src: *const c_char) {
         let src_str = unsafe { CStr::from_ptr(src) };
         let src_str_slice = src_str.to_bytes_with_nul();
@@ -698,7 +697,7 @@ pub mod capi {
         dest_str_slice.copy_from_slice(src_str_slice);
     }
 
-    #[no_mangle]
+    #[unsafe(no_mangle)]
     pub extern "C" fn Q_strcmp(s1: *const c_char, s2: *const c_char) -> c_int {
         let mut p1 = s1;
         let mut p2 = s2;
@@ -717,8 +716,12 @@ pub mod capi {
         }
     }
 
-    #[no_mangle]
-    pub unsafe extern "C" fn Q_strncmp(s1: *const c_char, s2: *const c_char, count: c_int) -> c_int {
+    #[unsafe(no_mangle)]
+    pub unsafe extern "C" fn Q_strncmp(
+        s1: *const c_char,
+        s2: *const c_char,
+        count: c_int,
+    ) -> c_int {
         let mut p1 = s1;
         let mut p2 = s2;
         let mut rem = count;
@@ -739,7 +742,7 @@ pub mod capi {
         }
     }
 
-    #[no_mangle]
+    #[unsafe(no_mangle)]
     pub extern "C" fn Q_atoi(str: *const c_char) -> c_int {
         let mut cstr = unsafe { CStr::from_ptr(str) };
 
@@ -810,14 +813,14 @@ pub mod capi {
         }
     }
 
-    #[no_mangle]
+    #[unsafe(no_mangle)]
     pub extern "C" fn SZ_Clear(buf: *mut SizeBufT) {
         unsafe { (*buf).cursize = 0 };
     }
 
     /// Returns the position (1 to argc - 1) in the program's argument list where the given parameter
     /// appears, or 0 if not present.
-    #[no_mangle]
+    #[unsafe(no_mangle)]
     pub extern "C" fn COM_CheckParm(parm: *const c_char) -> c_int {
         let argc = unsafe { com_argc } as usize;
         for i in 1..argc {
@@ -834,7 +837,7 @@ pub mod capi {
         return 0;
     }
 
-    #[no_mangle]
+    #[unsafe(no_mangle)]
     pub extern "C" fn COM_SkipPath(pathname: *const c_char) -> *const c_char {
         let str = unsafe { CStr::from_ptr(pathname) };
         let str_slice = str.to_bytes();
@@ -844,7 +847,7 @@ pub mod capi {
             .map_or(pathname, |pos| unsafe { pathname.add(pos + 1) })
     }
 
-    #[no_mangle]
+    #[unsafe(no_mangle)]
     pub extern "C" fn COM_StripExtension(inn: *const c_char, outn: *mut c_char, outsize: size_t) {
         if inn.is_null() {
             unsafe {
@@ -875,7 +878,7 @@ pub mod capi {
         }
     }
 
-    #[no_mangle]
+    #[unsafe(no_mangle)]
     pub extern "C" fn COM_FileGetExtension(inn: *const c_char) -> *const c_char {
         let str = unsafe { CStr::from_ptr(inn) };
         let str_slice = str.to_bytes();
@@ -899,7 +902,7 @@ pub mod capi {
     /// Given '[somedir/otherdir/]filename[.ext]', write only 'filename' to the output up to outsize
     /// - 1 characters.  If no 'filename' is present, '?model?' will be used as the 'filename' for
     /// debugging purposes.
-    #[no_mangle]
+    #[unsafe(no_mangle)]
     pub extern "C" fn COM_FileBase(inn: *const c_char, outn: *mut c_char, outsize: size_t) {
         // TODO: simplify
         let mut has_path = false;
@@ -963,7 +966,7 @@ pub mod capi {
     /// If 'path' is not empty, and does not have an extension or the extension doesn't match .EXT,
     /// and path plus new 'extension' does not exceed 'len' - 1, append it ('extension' should
     /// include the leading ".").
-    #[no_mangle]
+    #[unsafe(no_mangle)]
     pub extern "C" fn COM_AddExtension(path: *mut c_char, extension: *const c_char, len: size_t) {
         let path_str = unsafe { CStr::from_ptr(path) };
         let path_slice = path_str.to_bytes();

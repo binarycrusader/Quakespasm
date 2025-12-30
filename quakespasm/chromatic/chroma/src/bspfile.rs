@@ -19,8 +19,8 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
+use crate::Byte;
 use std::os::raw::{c_char, c_float, c_int, c_short, c_uint, c_ushort};
-use Byte;
 
 // upper design bounds
 pub const MAX_MAP_HULLS: usize = 4;

@@ -148,7 +148,7 @@ The zone calls are pretty much only used for small strings and structures,
 all big things are allocated on the hunk.
 ==============================================================================
 */
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub static mut mainzone: *mut MemZoneT = null_mut();
 
 //============================================================================
@@ -209,42 +209,42 @@ impl Default for CacheSystemT {
 
 #[allow(non_snake_case)]
 pub mod capi {
+    use super::{CacheSystemT, MemBlockT, MemZoneT, ZONEID};
+    use crate::{Byte, QBoolean};
     use std::mem::size_of;
     use std::os::raw::c_int;
     use std::ptr::null_mut;
-    use zone::{CacheSystemT, MemBlockT, MemZoneT, ZONEID};
-    use {Byte, QBoolean};
 
-    #[no_mangle]
+    #[unsafe(no_mangle)]
     pub static mut cache_head: CacheSystemT = CacheSystemT::default();
 
-    #[no_mangle]
+    #[unsafe(no_mangle)]
     pub static mut hunk_base: *mut Byte = null_mut();
-    #[no_mangle]
+    #[unsafe(no_mangle)]
     pub static mut hunk_size: c_int = 0;
 
-    #[no_mangle]
+    #[unsafe(no_mangle)]
     pub static mut hunk_low_used: c_int = 0;
-    #[no_mangle]
+    #[unsafe(no_mangle)]
     pub static mut hunk_high_used: c_int = 0;
 
-    #[no_mangle]
+    #[unsafe(no_mangle)]
     pub static mut hunk_tempactive: QBoolean = QBoolean::False;
-    #[no_mangle]
+    #[unsafe(no_mangle)]
     pub static mut hunk_tempmark: c_int = 0;
 
-    #[no_mangle]
+    #[unsafe(no_mangle)]
     pub unsafe extern "C" fn Hunk_LowMark() -> c_int {
         return hunk_low_used;
     }
 
     //============================================================================
-    #[no_mangle]
+    #[unsafe(no_mangle)]
     pub unsafe extern "C" fn Memory_InitZone(zone: *mut MemZoneT, size: c_int) {
         let block = (zone as *mut Byte).offset(size_of::<MemZoneT>() as isize) as *mut MemBlockT;
 
         // set the entire zone to one free block
-        let mut z = &mut (*zone);
+        let z = &mut (*zone);
         z.blocklist.prev = block;
         z.blocklist.next = block;
         z.blocklist.tag = 1; // in use block
@@ -252,7 +252,7 @@ pub mod capi {
         z.blocklist.size = 0;
         z.rover = block;
 
-        let mut b = &mut (*block);
+        let b = &mut (*block);
         b.next = &mut z.blocklist;
         b.prev = &mut z.blocklist;
         b.tag = 0; // free block

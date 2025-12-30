@@ -19,10 +19,9 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
+use crate::{wad_lumps, wad_numlumps, Byte, W_CleanupName};
 use std::os::raw::{c_char, c_int};
 use std::ptr::null_mut;
-use Byte;
-use {wad_lumps, wad_numlumps, W_CleanupName};
 
 /// LumpinfoT.compression types:
 pub const CMP_NONE: u32 = 0;
@@ -92,19 +91,18 @@ unsafe fn w_get_lumpinfo(name: *const c_char) -> *mut LumpinfoT {
 }
 
 pub mod capi {
+    use crate::wad::{w_get_lumpinfo, Byte, LumpinfoT, QPicT};
     use std::os::raw::{c_char, c_int, c_void};
     use std::ptr::null_mut;
     use std::slice;
-    use wad::{w_get_lumpinfo, LumpinfoT, QPicT};
-    use Byte;
 
-    #[no_mangle]
+    #[unsafe(no_mangle)]
     pub static mut wad_numlumps: c_int = 0;
 
-    #[no_mangle]
+    #[unsafe(no_mangle)]
     pub static mut wad_lumps: *mut LumpinfoT = null_mut();
 
-    #[no_mangle]
+    #[unsafe(no_mangle)]
     pub static mut wad_base: *mut Byte = null_mut();
 
     /// Lowercases name and pads with spaces and a terminating 0 to the length of
@@ -114,7 +112,7 @@ pub mod capi {
     /// Space padding is so names can be printed nicely in tables.
     /// Can safely be performed in place.
     ///
-    #[no_mangle]
+    #[unsafe(no_mangle)]
     pub unsafe extern "C" fn W_CleanupName(inn: *const c_char, outn: *mut c_char) {
         let in_slice = slice::from_raw_parts(inn as *const u8, 16);
         let out_slice = slice::from_raw_parts_mut(outn as *mut u8, 16);
@@ -133,7 +131,7 @@ pub mod capi {
         }
     }
 
-    #[no_mangle]
+    #[unsafe(no_mangle)]
     pub unsafe extern "C" fn W_GetLumpName(name: *const c_char) -> *mut c_void {
         let lump_p = w_get_lumpinfo(name);
 
@@ -146,7 +144,7 @@ pub mod capi {
         return null_mut();
     }
 
-    #[no_mangle]
+    #[unsafe(no_mangle)]
     pub unsafe extern "C" fn SwapPic(pic: *mut QPicT) {
         (&mut *pic).width = (&*pic).width.to_le();
         (&mut *pic).height = (&*pic).height.to_le();
@@ -160,7 +158,7 @@ pub mod capi {
         pub static mut com_basedir: [c_char; MAX_OSPATH as usize];
     }
 
-    #[no_mangle]
+    #[unsafe(no_mangle)]
     pub unsafe extern "C" fn W_LoadWadFile()
     {
         //TODO: use cache_alloc

@@ -21,12 +21,11 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-use net::{NET_MAXMESSAGE, NET_NAMELEN};
-use net_sys::SysSocketT;
+use crate::net::{NET_MAXMESSAGE, NET_NAMELEN};
+use crate::net_sys::SysSocketT;
+use crate::{Byte, QBoolean, MAX_DATAGRAM};
 use std::mem::size_of;
 use std::os::raw::{c_char, c_double, c_int, c_short, c_uchar, c_uint, c_void};
-use Byte;
-use {QBoolean, MAX_DATAGRAM};
 
 #[repr(C)]
 pub struct QSockAddr {

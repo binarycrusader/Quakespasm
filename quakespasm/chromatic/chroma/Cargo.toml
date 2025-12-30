@@ -1,7 +1,8 @@
 [package]
 name = "chroma"
 version = "0.1.0"
-authors = ["Shawn Walker-Salas <binarycrusader@gmail.com>"]
+edition.workspace = true
+authors.workspace = true
 
 [lib]
 crate-type = ["staticlib", "rlib"]
@@ -11,7 +12,9 @@ bitflags = "1.0"
 gl = "0.14"
 libc = "0.2"
 num = "0.2"
+lazy_static = "1.5.0"
+send_wrapper = "0.6.0"
 
 [dependencies.sdl2]
-version = "0.32"
-git = "https://github.com/AngryLawyer/rust-sdl2"
+version = "0.35.2"
+git = "https://github.com/Rust-SDL2/rust-sdl2"

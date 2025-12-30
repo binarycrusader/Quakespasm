@@ -106,7 +106,6 @@ pub mod capi {
     use super::{CVarCallbackT, CVarFlags, CVarT};
     use libc::{fileno, get_osfhandle, FILE};
     use std::os::windows::io::FromRawHandle;
-    use std::os::windows::io::IntoRawHandle;
     use std::os::windows::raw::HANDLE;
     use std::{
         ffi::CStr,
@@ -116,9 +115,9 @@ pub mod capi {
         ptr::null_mut,
     };
 
-    #[no_mangle]
+    #[unsafe(no_mangle)]
     pub static mut cvar_vars: *mut CVarT = null_mut();
-    #[no_mangle]
+    #[unsafe(no_mangle)]
     pub static cvar_null_string: &'static [u8] = b"\0";
 
     //==============================================================================
@@ -127,7 +126,7 @@ pub mod capi {
     //
     //==============================================================================
 
-    #[no_mangle]
+    #[unsafe(no_mangle)]
     pub unsafe extern "C" fn Cvar_FindVar(var_name: *const c_char) -> *mut CVarT {
         let find_str = CStr::from_ptr(var_name);
 
@@ -144,8 +143,11 @@ pub mod capi {
         return null_mut();
     }
 
-    #[no_mangle]
-    pub unsafe extern "C" fn Cvar_FindVarAfter(prev_name: *const c_char, with_flags: CVarFlags) -> *mut CVarT {
+    #[unsafe(no_mangle)]
+    pub unsafe extern "C" fn Cvar_FindVarAfter(
+        prev_name: *const c_char,
+        with_flags: CVarFlags,
+    ) -> *mut CVarT {
         let mut var;
 
         if !prev_name.is_null() && *prev_name != 0 {
@@ -175,7 +177,7 @@ pub mod capi {
         return null_mut();
     }
 
-    #[no_mangle]
+    #[unsafe(no_mangle)]
     pub unsafe extern "C" fn Cvar_VariableString(var_name: *const c_char) -> *const c_char {
         if let Some(var) = Cvar_FindVar(var_name).as_ref() {
             return (&*var).string;
@@ -183,7 +185,7 @@ pub mod capi {
         return cvar_null_string.as_ptr() as *const c_char;
     }
 
-    #[no_mangle]
+    #[unsafe(no_mangle)]
     pub unsafe extern "C" fn Cvar_VariableValue(var_name: *const c_char) -> c_float {
         if let Some(var) = Cvar_FindVar(var_name).as_ref() {
             return crate::Q_atof((&*var).string);
@@ -191,7 +193,7 @@ pub mod capi {
         return 0.0;
     }
 
-    #[no_mangle]
+    #[unsafe(no_mangle)]
     pub unsafe extern "C" fn Cvar_SetCallback(var: *mut CVarT, func: CVarCallbackT) {
         (&mut *var).callback = func;
         if func.is_some() {
@@ -209,11 +211,12 @@ pub mod capi {
     with the archive flag set to true.
     ============
     */
-    #[no_mangle]
+    #[unsafe(no_mangle)]
     pub unsafe extern "C" fn Cvar_WriteVariables(f: *mut FILE) {
         let fd = fileno(f);
         let h = get_osfhandle(fd) as HANDLE;
-        let mut file = File::from_raw_handle(h);
+        // This handle is being borrowed from FILE, so don't let Rust close it when done.
+        let mut file = std::mem::ManuallyDrop::new(File::from_raw_handle(h));
 
         let mut var = cvar_vars;
         while !var.is_null() {
@@ -234,7 +237,5 @@ pub mod capi {
 
             var = (&*var).next;
         }
-
-        file.into_raw_handle(); // don't close 'f' on drop()
     }
 }

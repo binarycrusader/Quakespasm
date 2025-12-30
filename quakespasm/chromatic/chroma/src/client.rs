@@ -20,18 +20,19 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
 
-use gl_model::QModelT;
+use crate::gl_model::QModelT;
+use crate::net_defs::QSocketT;
+use crate::protocol::UserCmdT;
+use crate::q_sound::SfxT;
+use crate::render::{EFragT, EntityT};
+use crate::vid::VID_GRADES;
+use crate::{
+    Byte, QBoolean, SizeBufT, Vec3T, MAX_CL_STATS, MAX_MODELS, MAX_SCOREBOARDNAME, MAX_SOUNDS,
+    MAX_STYLESTRING,
+};
 use libc::FILE;
-use net_defs::QSocketT;
-use protocol::UserCmdT;
-use q_sound::SfxT;
-use render::{EFragT, EntityT};
 use std::os::raw::{c_char, c_double, c_float, c_int, c_uint};
 use std::ptr::null_mut;
-use vid::VID_GRADES;
-use {Byte, QBoolean, Vec3T, MAX_SCOREBOARDNAME, MAX_STYLESTRING};
-use {SizeBufT, MAX_SOUNDS};
-use {MAX_CL_STATS, MAX_MODELS};
 
 #[derive(Clone, Copy)]
 #[repr(C)]

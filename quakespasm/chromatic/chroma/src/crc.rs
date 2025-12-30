@@ -54,23 +54,23 @@ pub mod capi {
     use super::{CRCTABLE, CRC_INIT_VALUE, CRC_XOR_VALUE};
     use std::os::raw::{c_int, c_uchar, c_ushort};
 
-    #[no_mangle]
+    #[unsafe(no_mangle)]
     pub unsafe extern "C" fn CRC_Init(crcvalue: *mut c_ushort) {
         *crcvalue = CRC_INIT_VALUE;
     }
 
-    #[no_mangle]
+    #[unsafe(no_mangle)]
     pub unsafe extern "C" fn CRC_ProcessByte(crcvalue: *mut c_ushort, data: c_uchar) {
         *crcvalue = (*crcvalue << 8) ^ CRCTABLE[((*crcvalue >> 8) ^ data as c_ushort) as usize];
     }
 
-    #[no_mangle]
+    #[unsafe(no_mangle)]
     pub extern "C" fn CRC_Value(crcvalue: c_ushort) -> c_ushort {
         return crcvalue ^ CRC_XOR_VALUE;
     }
 
     //johnfitz -- texture crc
-    #[no_mangle]
+    #[unsafe(no_mangle)]
     pub unsafe extern "C" fn CRC_Block(start: *const c_uchar, count: c_int) -> c_ushort {
         let mut crc: c_ushort = CRC_INIT_VALUE;
         for idx in 0..count as isize {

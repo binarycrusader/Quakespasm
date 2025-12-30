@@ -22,11 +22,43 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
 pub mod capi {
-    /*
-    #[no_mangle]
-    pub extern "C" fn Sys_DoubleTime() -> c_double
-    {
-        return global_sdl_context.timer().ticks() / 1000.0;
+    use crate::{
+        global_sdl_audio_context, global_sdl_context, global_sdl_controller_context,
+        global_sdl_timer_context, global_sdl_video_context,
+    };
+    use std::os::raw::c_double;
+
+    #[unsafe(no_mangle)]
+    pub extern "C" fn Sys_DoubleTime() -> c_double {
+        return (global_sdl_timer_context.ticks() as c_double) / 1000.0;
     }
-    */
+
+    #[unsafe(no_mangle)]
+    pub extern "C" fn Sys_AtExit() {
+        // IOU: Attempts to use global sdl_context objects will fail after this. Need a cleaner way
+        // to manage globals.
+        unsafe { sdl2::sys::SDL_Quit() };
+    }
+
+    #[unsafe(no_mangle)]
+    pub extern "C" fn Sys_InitSDL() {
+        //let sdl_version = sdl2::version::version();
+
+        //Sys_Printf("Found SDL version %i.%i.%i\n",sdl_version->major,sdl_version->minor,sdl_version->patch);
+        // N.B. quakespasm 0.96.3+ removed the SDL Version checks that were here. Currently, SDL
+        // 2.26.x+ is required, but the latest stable 2.x version should work. SDL3 has since
+        // replaced SDL2, but this project isn't ready for that yet.
+
+        // Global lazy statics are initialized on first deref; do so in required order.
+        let _init_sdl_context = &*global_sdl_context;
+        let _init_sdl_audio_context = &*global_sdl_audio_context;
+        let _init_sdl_controller_context = &*global_sdl_controller_context;
+        let _init_sdl_timer_context = &*global_sdl_timer_context;
+        let _init_sdl_video_context = &*global_sdl_video_context;
+
+        // Normally drop() would be invoked on the global_sdl_context
+        unsafe {
+            libc::atexit(Sys_AtExit);
+        }
+    }
 }

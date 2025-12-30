@@ -6,6 +6,10 @@ extern crate gl;
 extern crate libc;
 extern crate num;
 extern crate sdl2;
+#[macro_use]
+extern crate lazy_static;
+extern crate send_wrapper;
+use send_wrapper::SendWrapper;
 
 pub mod bspfile;
 
@@ -13,7 +17,6 @@ pub mod cl_main;
 pub use cl_main::capi::*;
 
 pub mod client;
-pub use client::capi::*;
 
 pub mod common;
 pub use common::capi::*;
@@ -29,18 +32,15 @@ pub mod cvar;
 pub use cvar::capi::*;
 
 pub mod gl_model;
-pub use gl_model::capi::*;
 
 pub mod gl_screen;
 pub use gl_screen::capi::*;
 
 pub mod gl_texmgr;
-pub use gl_texmgr::capi::*;
 
 pub mod modelgen;
 
 pub mod host;
-pub use host::capi::*;
 
 pub mod keys;
 pub use keys::capi::*;
@@ -69,7 +69,6 @@ pub mod wad;
 pub use wad::capi::*;
 
 pub mod vid;
-pub use vid::capi::*;
 
 pub mod zone;
 pub use zone::capi::*;
@@ -330,4 +329,37 @@ pub struct QuakeParmsT {
 pub struct FilelistItemT {
     pub name: [c_char; 32],
     pub next: *mut FilelistItemT,
+}
+
+// Defer initialization of these globals until runtime using lazy_static; since that requires a type
+// that implements Send<>, wrap each one in SendWrapper<> which will also ensure single-threaded
+// access only at a small cost on every deref, etc.
+//
+// N.B. 'unsafe-send-sync' is the cheapest alternative which just impl's Send and Sync without any
+// safety checks if it's ever determined that SendWrapper is too expensive.
+lazy_static! {
+    pub static ref global_sdl_context: SendWrapper<sdl2::Sdl> = {
+        // IOU: Sys_Error("Couldn't init SDL: %s", SDL_GetError());
+        SendWrapper::new(sdl2::init().unwrap())
+    };
+
+    pub static ref global_sdl_audio_context: SendWrapper<sdl2::AudioSubsystem> = {
+        // IOU: Con_Printf("Couldn't init SDL audio: %s\n", SDL_GetError());
+        SendWrapper::new(global_sdl_context.audio().unwrap())
+    };
+
+    pub static ref global_sdl_controller_context: SendWrapper<sdl2::GameControllerSubsystem> = {
+        // IOU: Con_Warning("could not initialize SDL Game Controller\n");
+        SendWrapper::new(global_sdl_context.game_controller().unwrap())
+    };
+
+    pub static ref global_sdl_timer_context: SendWrapper<sdl2::TimerSubsystem> = {
+        // IOU: Con_Warning("could not initialize SDL Timer\n");
+        SendWrapper::new(global_sdl_context.timer().unwrap())
+    };
+
+    pub static ref global_sdl_video_context: SendWrapper<sdl2::VideoSubsystem> = {
+        // IOU: Sys_Error("Couldn't init SDL video: %s", SDL_GetError());
+        SendWrapper::new(global_sdl_context.video().unwrap())
+    };
 }
