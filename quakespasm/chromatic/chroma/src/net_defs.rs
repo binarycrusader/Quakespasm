@@ -45,7 +45,7 @@ pub const NET_HEADERSIZE: usize = 2 * size_of::<c_uint>();
 pub const NET_DATAGRAMSIZE: usize = MAX_DATAGRAM + NET_HEADERSIZE;
 
 bitflags! {
-    #[derive(Default)]
+    #[derive(Default,Clone,Copy)]
     #[repr(C)]
     pub struct NetHeaderFlags: c_uint {
         const LengthMask = 0x0000ffff;

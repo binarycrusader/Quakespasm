@@ -34,7 +34,7 @@ pub const PROTOCOL_FITZQUAKE: u32 = 666;
 pub const PROTOCOL_RMQ: u32 = 999;
 
 bitflags! {
-    #[derive(Default)]
+    #[derive(Default,Clone,Copy)]
     #[repr(C)]
     /// PROTOCOL_RMQ protocol flags
     pub struct RMQProtocolFlags: c_uint {
@@ -55,7 +55,7 @@ bitflags! {
 // if the high bit of the servercmd is set, the low bits are fast update flags:
 
 bitflags! {
-    #[derive(Default)]
+    #[derive(Default,Clone,Copy)]
     #[repr(C)]
     pub struct UpdateFlags: c_uint {
         const None = 0;
@@ -103,7 +103,7 @@ bitflags! {
 }
 
 bitflags! {
-    #[derive(Default)]
+    #[derive(Default,Clone,Copy)]
     #[repr(C)]
     pub struct ServerUpdateFlags: c_uint {
         const None = 0;
@@ -161,7 +161,7 @@ pub const DEFAULT_SOUND_PACKET_VOLUME: u32 = 255;
 pub const DEFAULT_SOUND_PACKET_ATTENUATION: f32 = 1.0;
 
 bitflags! {
-    #[derive(Default)]
+    #[derive(Default,Clone,Copy)]
     #[repr(C)]
     pub struct SoundUpdateFlags: c_uint {
         const None = 0;
@@ -178,7 +178,7 @@ bitflags! {
 }
 
 bitflags! {
-    #[derive(Default)]
+    #[derive(Default,Clone,Copy)]
     #[repr(C)]
     /// PROTOCOL_FITZQUAKE -- flags for entity baseline messages
     pub struct BaselineFlags: c_uint {

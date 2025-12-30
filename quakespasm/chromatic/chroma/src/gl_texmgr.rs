@@ -28,7 +28,7 @@ use std::os::raw::{c_char, c_int, c_schar, c_uint, c_ushort};
 use std::ptr::null_mut;
 
 bitflags! {
-    #[derive(Default)]
+    #[derive(Default,Clone,Copy)]
     #[repr(C)]
     pub struct TexPref: c_uint {
         /// generate mipmaps

@@ -8,13 +8,10 @@ authors.workspace = true
 crate-type = ["staticlib", "rlib"]
 
 [dependencies]
-bitflags = "1.0"
+bitflags = "2.10"
 gl = "0.14"
 libc = "0.2"
-num = "0.2"
+num = "0.4"
 lazy_static = "1.5.0"
 send_wrapper = "0.6.0"
-
-[dependencies.sdl2]
-version = "0.35.2"
-git = "https://github.com/Rust-SDL2/rust-sdl2"
+sdl2 = "0.38.0"

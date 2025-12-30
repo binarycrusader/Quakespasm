@@ -63,7 +63,7 @@ interface from being ambiguous.
 use std::os::raw::{c_char, c_float, c_uint};
 
 bitflags! {
-    #[derive(Default)]
+    #[derive(Default,Clone,Copy)]
     #[repr(C)]
     pub struct CVarFlags: c_uint {
         const None = 0;

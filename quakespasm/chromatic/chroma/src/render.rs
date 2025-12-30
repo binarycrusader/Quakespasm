@@ -50,7 +50,7 @@ impl Default for EFragT {
 }
 
 bitflags! {
-    #[derive(Default)]
+    #[derive(Default,Clone,Copy)]
     #[repr(C)]
     pub struct LerpFlags: c_uint {
         const None = 0;

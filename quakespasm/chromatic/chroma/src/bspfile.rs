@@ -269,7 +269,7 @@ pub struct TexInfoT {
 }
 
 bitflags! {
-    #[derive(Default)]
+    #[derive(Default,Clone,Copy)]
     #[repr(C)]
     pub struct TexInfoFlags: c_uint {
         const None = 0;

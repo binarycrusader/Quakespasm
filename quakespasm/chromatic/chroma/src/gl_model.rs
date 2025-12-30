@@ -42,7 +42,7 @@ use std::os::raw::{c_char, c_float, c_int, c_schar, c_short, c_uint, c_ushort};
 use std::ptr::null_mut;
 
 bitflags! {
-    #[derive(Default)]
+    #[derive(Default,Clone,Copy)]
     #[repr(C)]
     pub struct EntityEffects: c_uint {
         const BrightField = 1 << 1;
@@ -157,7 +157,7 @@ impl Default for TextureT {
 }
 
 bitflags! {
-    #[derive(Default)]
+    #[derive(Default,Clone,Copy)]
     #[repr(C)]
     pub struct SurfaceFlags: c_uint {
         const PlaneBack = 1 << 1;
@@ -757,7 +757,7 @@ impl Default for ModTypeT {
 }
 
 bitflags! {
-    #[derive(Default)]
+    #[derive(Default,Clone,Copy)]
     #[repr(C)]
     pub struct ModelFlags: c_uint {
         const None = 0;
