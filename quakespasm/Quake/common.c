@@ -780,7 +780,7 @@ static int COM_FindFile (const char *filename, int *handle, FILE **file,
 			}
 
 			q_snprintf (netpath, sizeof(netpath), "%s/%s",search->filename, filename);
-			findtime = Sys_FileTime (netpath);
+			findtime = Sys_FileExists (netpath);
 			if (findtime == -1)
 				continue;
 

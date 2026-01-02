@@ -41,13 +41,6 @@ extern cvar_t net_messagetimeout;
 #define sfunc	net_drivers[sock->driver]
 #define dfunc	net_drivers[net_driverlevel]
 
-double SetNetTime (void)
-{
-	net_time = Sys_DoubleTime();
-	return net_time;
-}
-
-
 /*
 ===================
 NET_NewQSocket

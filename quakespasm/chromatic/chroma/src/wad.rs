@@ -141,7 +141,7 @@ pub mod capi {
             return lump_p as *mut c_void;
         }
 
-        return null_mut();
+        null_mut()
     }
 
     #[unsafe(no_mangle)]

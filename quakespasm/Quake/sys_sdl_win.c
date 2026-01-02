@@ -29,9 +29,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "quakedef.h"
 
-#include <sys/types.h>
 #include <errno.h>
-#include <io.h>
 #include <direct.h>
 
 #if defined(SDL_FRAMEWORK) || defined(NO_SDL_CONFIG)
@@ -44,117 +42,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "SDL.h"
 #endif
 
+static HANDLE hinput, houtput;
 
-qboolean		isDedicated;
-qboolean	Win95, Win95old, WinNT, WinVista;
-cvar_t		sys_throttle = {"sys_throttle", "0.02", CVAR_ARCHIVE};
-
-static HANDLE		hinput, houtput;
-
-#define	MAX_HANDLES		32	/* johnfitz -- was 10 */
-static FILE		*sys_handles[MAX_HANDLES];
-
-
-static int findhandle (void)
-{
-	int i;
-
-	for (i = 1; i < MAX_HANDLES; i++)
-	{
-		if (!sys_handles[i])
-			return i;
-	}
-	Sys_Error ("out of handles");
-	return -1;
-}
-
-long Sys_filelength (FILE *f)
-{
-	long		pos, end;
-
-	pos = ftell (f);
-	fseek (f, 0, SEEK_END);
-	end = ftell (f);
-	fseek (f, pos, SEEK_SET);
-
-	return end;
-}
-
-int Sys_FileOpenRead (const char *path, int *hndl)
-{
-	FILE	*f;
-	int	i, retval;
-
-	i = findhandle ();
-	f = fopen(path, "rb");
-
-	if (!f)
-	{
-		*hndl = -1;
-		retval = -1;
-	}
-	else
-	{
-		sys_handles[i] = f;
-		*hndl = i;
-		retval = Sys_filelength(f);
-	}
-
-	return retval;
-}
-
-int Sys_FileOpenWrite (const char *path)
-{
-	FILE	*f;
-	int		i;
-
-	i = findhandle ();
-	f = fopen(path, "wb");
-
-	if (!f)
-		Sys_Error ("Error opening %s: %s", path, strerror(errno));
-
-	sys_handles[i] = f;
-	return i;
-}
-
-void Sys_FileClose (int handle)
-{
-	fclose (sys_handles[handle]);
-	sys_handles[handle] = NULL;
-}
-
-void Sys_FileSeek (int handle, int position)
-{
-	fseek (sys_handles[handle], position, SEEK_SET);
-}
-
-int Sys_FileRead (int handle, void *dest, int count)
-{
-	return fread (dest, 1, count, sys_handles[handle]);
-}
-
-int Sys_FileWrite (int handle, const void *data, int count)
-{
-	return fwrite (data, 1, count, sys_handles[handle]);
-}
-
-int Sys_FileTime (const char *path)
-{
-	FILE	*f;
-
-	f = fopen(path, "rb");
-
-	if (f)
-	{
-		fclose(f);
-		return 1;
-	}
-
-	return -1;
-}
-
-static char	cwd[1024];
+static char cwd[1024];
 
 static void Sys_GetBasedir (char *argv0, char *dst, size_t dstsize)
 {
@@ -176,53 +66,17 @@ static void Sys_GetBasedir (char *argv0, char *dst, size_t dstsize)
 	}
 }
 
-typedef enum { dpi_unaware = 0, dpi_system_aware = 1, dpi_monitor_aware = 2 } dpi_awareness;
-typedef BOOL (WINAPI *SetProcessDPIAwareFunc)();
-typedef HRESULT (WINAPI *SetProcessDPIAwarenessFunc)(dpi_awareness value);
-
-static void Sys_SetDPIAware (void)
+void Sys_Init (void)
 {
-	HMODULE hUser32, hShcore;
-	SetProcessDPIAwarenessFunc setDPIAwareness;
-	SetProcessDPIAwareFunc setDPIAware;
+	OSVERSIONINFO	vinfo;
 
-	/* Neither SDL 1.2 nor SDL 2.0.3 can handle the OS scaling our window.
-	  (e.g. https://bugzilla.libsdl.org/show_bug.cgi?id=2713)
-	  Call SetProcessDpiAwareness/SetProcessDPIAware to opt out of scaling.
-	*/
-
-	hShcore = LoadLibraryA ("Shcore.dll");
-	hUser32 = LoadLibraryA ("user32.dll");
-	setDPIAwareness = (SetProcessDPIAwarenessFunc) (hShcore ? GetProcAddress (hShcore, "SetProcessDpiAwareness") : NULL);
-	setDPIAware = (SetProcessDPIAwareFunc) (hUser32 ? GetProcAddress (hUser32, "SetProcessDPIAware") : NULL);
-
-	if (setDPIAwareness) /* Windows 8.1+ */
-		setDPIAwareness (dpi_monitor_aware);
-	else if (setDPIAware) /* Windows Vista-8.0 */
-		setDPIAware ();
-
-	if (hShcore)
-		FreeLibrary (hShcore);
-	if (hUser32)
-		FreeLibrary (hUser32);
-}
-
-static void Sys_SetTimerResolution(void)
-{
 	/* Set OS timer resolution to 1ms.
 	   Works around buffer underruns with directsound and SDL2, but also
 	   will make Sleep()/SDL_Dleay() accurate to 1ms which should help framerate
 	   stability.
 	*/
-	timeBeginPeriod (1);
-}
-
-void Sys_Init (void)
-{
-	OSVERSIONINFO	vinfo;
-
-	Sys_SetTimerResolution ();
-	Sys_SetDPIAware ();
+	timeBeginPeriod(1);
+	SDL_SetHint("SDL_WINDOWS_DPI_AWARENESS", "permonitorv2");
 
 	memset (cwd, 0, sizeof(cwd));
 	Sys_GetBasedir(NULL, cwd, sizeof(cwd));
@@ -246,9 +100,7 @@ void Sys_Init (void)
 	if (vinfo.dwPlatformId == VER_PLATFORM_WIN32_NT)
 	{
 		SYSTEM_INFO info;
-		WinNT = true;
-		if (vinfo.dwMajorVersion >= 6)
-			WinVista = true;
+		/* WinNT */
 		GetSystemInfo(&info);
 		host_parms->numcpus = info.dwNumberOfProcessors;
 		if (host_parms->numcpus < 1)
@@ -256,15 +108,8 @@ void Sys_Init (void)
 	}
 	else
 	{
-		WinNT = false; /* Win9x or WinME */
+		/* Win95: Win9x or WinME */
 		host_parms->numcpus = 1;
-		if ((vinfo.dwMajorVersion == 4) && (vinfo.dwMinorVersion == 0))
-		{
-			Win95 = true;
-			/* Win95-gold or Win95A can't switch bpp automatically */
-			if (vinfo.szCSDVersion[1] != 'C' && vinfo.szCSDVersion[1] != 'B')
-				Win95old = true;
-		}
 	}
 	Sys_Printf("Detected %d CPUs.\n", host_parms->numcpus);
 
@@ -423,16 +268,3 @@ const char *Sys_ConsoleInput (void)
 
 	return NULL;
 }
-
-void Sys_Sleep (unsigned long msecs)
-{
-/*	Sleep (msecs);*/
-	SDL_Delay (msecs);
-}
-
-void Sys_SendKeyEvents (void)
-{
-	IN_Commands();		//ericw -- allow joysticks to add keys so they can be used to confirm SCR_ModalMessage
-	IN_SendKeyEvents();
-}
-

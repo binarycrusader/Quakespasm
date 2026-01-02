@@ -27,7 +27,6 @@ const CON_MINSIZE: usize = 16384;
 #[allow(unused)]
 const NUM_CON_TIMES: usize = 4;
 
-#[allow(non_snake_case)]
 pub mod capi {
     use super::NUM_CON_TIMES;
     use crate::client::CActiveT;

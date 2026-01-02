@@ -23,7 +23,7 @@ pub mod capi {
     use crate::cvar::{CVarFlags, CVarT};
     use crate::net::NET_NAMELEN;
     use crate::net_defs::QSocketT;
-    use crate::{QBoolean, SizeBufT};
+    use crate::{QBoolean, SizeBufT, Sys_DoubleTime};
     use std::os::raw::{c_char, c_double, c_int};
     use std::ptr::null_mut;
 
@@ -101,7 +101,7 @@ pub mod capi {
         value: 0.0,
         default_string: b"300\0".as_ptr() as *const c_char,
         callback: None,
-        next: std::ptr::null_mut(),
+        next: null_mut(),
     };
     #[unsafe(no_mangle)]
     pub static mut hostname: CVarT = CVarT {
@@ -111,7 +111,7 @@ pub mod capi {
         value: 0.0,
         default_string: b"UNNAMED\0".as_ptr() as *const c_char,
         callback: None,
-        next: std::ptr::null_mut(),
+        next: null_mut(),
     };
 
     #[unsafe(no_mangle)]
@@ -120,14 +120,11 @@ pub mod capi {
     #[unsafe(no_mangle)]
     pub static mut net_time: c_double = 0.0;
 
-    /*
     #[unsafe(no_mangle)]
-    pub extern "C" fn SetNetTime() -> c_double
-    {
+    pub extern "C" fn SetNetTime() -> c_double {
         unsafe {
             net_time = Sys_DoubleTime();
-            return net_time;
+            net_time
         }
     }
-    */
 }

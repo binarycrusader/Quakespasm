@@ -140,7 +140,7 @@ int Sys_FileWrite (int handle, const void *data, int count)
 	return fwrite (data, 1, count, sys_handles[handle]);
 }
 
-int Sys_FileTime (const char *path)
+int Sys_FileExists (const char *path)
 {
 	FILE	*f;
 

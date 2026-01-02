@@ -142,7 +142,6 @@ pub enum ClientConnectMessage {
     RepRuleInfo = 0x85,
 }
 
-#[allow(non_snake_case)]
 #[repr(C)]
 pub struct QSocketT {
     pub next: *mut QSocketT,

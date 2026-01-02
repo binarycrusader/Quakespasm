@@ -207,7 +207,6 @@ impl Default for CacheSystemT {
     }
 }
 
-#[allow(non_snake_case)]
 pub mod capi {
     use super::{CacheSystemT, MemBlockT, MemZoneT, ZONEID};
     use crate::{Byte, QBoolean};
