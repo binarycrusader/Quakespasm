@@ -26,5 +26,5 @@ pub fn q_rint(x: f32) -> u32 {
     if x > 0.0 {
         return (x + 0.5) as u32;
     }
-    return (x - 0.5) as u32;
+    (x - 0.5) as u32
 }

@@ -38,7 +38,7 @@ pub mod capi {
             dst_nul_bytes[0] = '\0' as i8;
         }
 
-        return src_strlen;
+        src_strlen
     }
 
     /*
@@ -58,6 +58,6 @@ pub mod capi {
         }
 
         let (_, dst_rem) = dst_slice.split_at_mut(dst_strlen);
-        return q_strlcpy(dst_rem.as_mut_ptr(), src, dst_rem.len()) + dst_strlen;
+        q_strlcpy(dst_rem.as_mut_ptr(), src, dst_rem.len()) + dst_strlen
     }
 }

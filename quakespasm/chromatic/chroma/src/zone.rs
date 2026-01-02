@@ -189,7 +189,7 @@ pub struct CacheSystemT {
 
 impl CacheSystemT {
     pub const fn default() -> Self {
-        return Self {
+        Self {
             size: 0,
             user: null_mut(),
             name: [0; CACHENAME_LEN],
@@ -197,7 +197,7 @@ impl CacheSystemT {
             next: null_mut(),
             lru_prev: null_mut(),
             lur_next: null_mut(),
-        };
+        }
     }
 }
 
@@ -234,7 +234,7 @@ pub mod capi {
 
     #[unsafe(no_mangle)]
     pub unsafe extern "C" fn Hunk_LowMark() -> c_int {
-        return hunk_low_used;
+        hunk_low_used
     }
 
     //============================================================================

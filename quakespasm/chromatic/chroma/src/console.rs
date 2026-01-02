@@ -41,6 +41,7 @@ pub mod capi {
         fs::File,
         io::Write,
         os::raw::{c_char, c_float, c_int},
+        ptr::null_mut
     };
 
     #[unsafe(no_mangle)]
@@ -65,7 +66,7 @@ pub mod capi {
     #[unsafe(no_mangle)]
     pub static mut con_x: c_int = 0; // offset in current line for next print
     #[unsafe(no_mangle)]
-    pub static mut con_text: *mut c_char = std::ptr::null_mut();
+    pub static mut con_text: *mut c_char = null_mut();
 
     #[unsafe(no_mangle)]
     pub static mut con_lastcenterstring: [c_char; 1024] = [0; 1024];
@@ -91,7 +92,7 @@ pub mod capi {
         value: 0.0,
         default_string: b"3\0".as_ptr() as *const c_char,
         callback: None,
-        next: std::ptr::null_mut(),
+        next: null_mut(),
     }; //seconds
 
     #[unsafe(no_mangle)]
@@ -102,7 +103,7 @@ pub mod capi {
         value: 0.0,
         default_string: b"1\0".as_ptr() as *const c_char,
         callback: None,
-        next: std::ptr::null_mut(),
+        next: null_mut(),
     };
 
     #[unsafe(no_mangle)]

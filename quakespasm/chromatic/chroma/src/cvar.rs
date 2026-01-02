@@ -140,7 +140,7 @@ pub mod capi {
             var = (&*var).next;
         }
 
-        return null_mut();
+        null_mut()
     }
 
     #[unsafe(no_mangle)]
@@ -174,7 +174,7 @@ pub mod capi {
             var = (&*var).next;
         }
 
-        return null_mut();
+        null_mut()
     }
 
     #[unsafe(no_mangle)]
@@ -182,7 +182,7 @@ pub mod capi {
         if let Some(var) = Cvar_FindVar(var_name).as_ref() {
             return (&*var).string;
         }
-        return cvar_null_string.as_ptr() as *const c_char;
+        cvar_null_string.as_ptr() as *const c_char
     }
 
     #[unsafe(no_mangle)]
@@ -190,7 +190,7 @@ pub mod capi {
         if let Some(var) = Cvar_FindVar(var_name).as_ref() {
             return crate::Q_atof((&*var).string);
         }
-        return 0.0;
+        0.0
     }
 
     #[unsafe(no_mangle)]

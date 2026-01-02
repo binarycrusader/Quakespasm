@@ -66,7 +66,7 @@ pub mod capi {
 
     #[unsafe(no_mangle)]
     pub extern "C" fn CRC_Value(crcvalue: c_ushort) -> c_ushort {
-        return crcvalue ^ CRC_XOR_VALUE;
+        crcvalue ^ CRC_XOR_VALUE
     }
 
     //johnfitz -- texture crc
@@ -76,6 +76,6 @@ pub mod capi {
         for idx in 0..count as isize {
             crc = (crc << 8) ^ CRCTABLE[((crc >> 8) ^ *start.offset(idx) as c_ushort) as usize];
         }
-        return crc;
+        crc
     }
 }

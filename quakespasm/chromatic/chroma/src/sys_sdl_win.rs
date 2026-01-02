@@ -62,6 +62,7 @@ pub mod capi {
     use std::fs::File;
     use std::io::{Read, Seek, SeekFrom, Write};
     use std::os::raw::{c_char, c_double, c_int, c_ulong, c_void};
+    use std::ptr::null_mut;
 
     #[unsafe(no_mangle)]
     pub static mut isDedicated: QBoolean = QBoolean::False;
@@ -74,7 +75,7 @@ pub mod capi {
         value: 0.02,
         default_string: b"0.02\0".as_ptr() as *const c_char,
         callback: None,
-        next: std::ptr::null_mut(),
+        next: null_mut(),
     }; // seconds
 
     #[unsafe(no_mangle)]
@@ -234,7 +235,11 @@ pub mod capi {
             .to_str()
             .ok()
             .map_or(-1, |fspath| {
-                if std::path::Path::new(fspath).is_file() { 1 } else { -1 }
+                if std::path::Path::new(fspath).is_file() {
+                    1
+                } else {
+                    -1
+                }
             })
     }
 

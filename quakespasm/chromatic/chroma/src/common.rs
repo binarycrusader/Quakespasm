@@ -167,7 +167,7 @@ pub mod capi {
         value: 0.0,
         default_string: b"1\0".as_ptr() as *const c_char,
         callback: None,
-        next: std::ptr::null_mut(),
+        next: null_mut(),
     };
 
     // CvarFlags::ServerInfo is not set as sending cmdline upon CCREQ_RULE_INFO is unsafe.
@@ -179,7 +179,7 @@ pub mod capi {
         value: 0.0,
         default_string: b"\0".as_ptr() as *const c_char,
         callback: None,
-        next: std::ptr::null_mut(),
+        next: null_mut(),
     };
 
     /// True if using non-Id files
@@ -253,32 +253,32 @@ pub mod capi {
     */
     #[unsafe(no_mangle)]
     pub extern "C" fn ShortSwap(l: c_short) -> c_short {
-        return l.swap_bytes();
+        l.swap_bytes()
     }
 
     #[unsafe(no_mangle)]
     pub extern "C" fn ShortNoSwap(l: c_short) -> c_short {
-        return l;
+        l
     }
 
     #[unsafe(no_mangle)]
     pub extern "C" fn LongSwap(l: c_int) -> c_int {
-        return l.swap_bytes();
+        l.swap_bytes()
     }
 
     #[unsafe(no_mangle)]
     pub extern "C" fn LongNoSwap(l: c_int) -> c_int {
-        return l;
+        l
     }
 
     #[unsafe(no_mangle)]
     pub extern "C" fn FloatSwap(f: c_float) -> c_float {
-        return f.to_bits().swap_bytes() as f32;
+        f.to_bits().swap_bytes() as f32
     }
 
     #[unsafe(no_mangle)]
     pub extern "C" fn FloatNoSwap(f: c_float) -> c_float {
-        return f;
+        f
     }
 
     /*
@@ -321,7 +321,7 @@ pub mod capi {
             unsafe { slice::from_raw_parts(net_message.data as *mut c_char, cursize) };
         let c = net_message_data[readcount] as c_int;
         unsafe { msg_readcount += 1 };
-        return c;
+        c
     }
 
     #[unsafe(no_mangle)]
@@ -336,7 +336,7 @@ pub mod capi {
         let net_message_data = unsafe { slice::from_raw_parts(net_message.data, cursize) };
         let c = net_message_data[readcount] as c_int;
         unsafe { msg_readcount += 1 };
-        return c;
+        c
     }
 
     #[unsafe(no_mangle)]
@@ -352,7 +352,7 @@ pub mod capi {
         let c = ((net_message_data[readcount] as c_int)
             + ((net_message_data[readcount + 1] as c_int) << 8)) as c_short;
         unsafe { msg_readcount += 2 };
-        return c as c_int;
+        c as c_int
     }
 
     #[unsafe(no_mangle)]
@@ -370,7 +370,7 @@ pub mod capi {
             + ((net_message_data[readcount + 2] as c_int) << 16)
             + ((net_message_data[readcount + 3] as c_int) << 24)) as c_int;
         unsafe { msg_readcount += 4 };
-        return c as c_int;
+        c as c_int
     }
 
     #[unsafe(no_mangle)]
@@ -391,7 +391,7 @@ pub mod capi {
         ];
         let c = f32::from_le_bytes(le_bytes) as c_float;
         unsafe { msg_readcount += 4 };
-        return c;
+        c
     }
 
     #[unsafe(no_mangle)]
@@ -425,14 +425,14 @@ pub mod capi {
     // original behavior, 13.3 fixed point coords, max range +-4096
     #[unsafe(no_mangle)]
     pub extern "C" fn MSG_ReadCoord16() -> c_float {
-        return ((MSG_ReadShort() as c_double) * (1.0 / 8.0)) as c_float;
+        ((MSG_ReadShort() as c_double) * (1.0 / 8.0)) as c_float
     }
 
     // 16.8 fixed point coords, max range +-32768
     #[unsafe(no_mangle)]
     pub extern "C" fn MSG_ReadCoord24() -> c_float {
-        return ((MSG_ReadShort() as c_double) + (MSG_ReadByte() as c_double) * (1.0 / 255.0))
-            as c_float;
+        ((MSG_ReadShort() as c_double) + (MSG_ReadByte() as c_double) * (1.0 / 255.0))
+            as c_float
     }
 
     #[unsafe(no_mangle)]
@@ -445,7 +445,7 @@ pub mod capi {
         } else if protoflags.contains(RMQProtocolFlags::F24bitCoord) {
             return MSG_ReadCoord24();
         }
-        return MSG_ReadCoord16();
+        MSG_ReadCoord16()
     }
 
     #[unsafe(no_mangle)]
@@ -456,7 +456,7 @@ pub mod capi {
         } else if protoflags.contains(RMQProtocolFlags::ShortAngle) {
             return ((MSG_ReadShort() as c_double) * (360.0 / 65536.0)) as c_float;
         }
-        return ((MSG_ReadChar() as c_double) * (360.0 / 256.0)) as c_float;
+        ((MSG_ReadChar() as c_double) * (360.0 / 256.0)) as c_float
     }
 
     // for PROTOCOL_FITZQUAKE
@@ -466,7 +466,7 @@ pub mod capi {
         if protoflags.contains(RMQProtocolFlags::FloatAngle) {
             return MSG_ReadFloat();
         }
-        return ((MSG_ReadShort() as c_double) * (360.0 / 65536.0)) as c_float;
+        ((MSG_ReadShort() as c_double) * (360.0 / 65536.0)) as c_float
     }
 
     /*
@@ -498,7 +498,7 @@ pub mod capi {
                 return lc1 - lc2;
             }
         }
-        return 0;
+        0
     }
 
     #[unsafe(no_mangle)]
@@ -520,7 +520,7 @@ pub mod capi {
                 return lc1 - lc2;
             }
         }
-        return 0;
+        0
     }
 
     #[unsafe(no_mangle)]
@@ -553,7 +553,7 @@ pub mod capi {
             }
         }
 
-        return null(); // didn't find it
+        null() // didn't find it
     }
 
     #[unsafe(no_mangle)]
@@ -612,7 +612,7 @@ pub mod capi {
                         return if is_neg { -v } else { v };
                     }
                 }
-                return if is_neg { -0.0 } else { 0.0 };
+                if is_neg { -0.0 } else { 0.0 }
             }
             _ => {
                 if is_neg {
@@ -801,7 +801,7 @@ pub mod capi {
                         return if is_neg { -v } else { v };
                     }
                 }
-                return if is_neg { -0 } else { 0 };
+                if is_neg { -0 } else { 0 }
             }
             _ => {
                 if is_neg {
@@ -834,7 +834,7 @@ pub mod capi {
             }
         }
 
-        return 0;
+        0
     }
 
     #[unsafe(no_mangle)]
@@ -896,7 +896,7 @@ pub mod capi {
             }
         }
 
-        return cvar_null_string.as_ptr() as *const c_char; // eol; no extension
+        cvar_null_string.as_ptr() as *const c_char // eol; no extension
     }
 
     /// Given '[somedir/otherdir/]filename[.ext]', write only 'filename' to the output up to outsize

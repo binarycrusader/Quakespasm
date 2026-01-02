@@ -206,7 +206,7 @@ pub fn ent_alpha_encode(a: f32) -> u32 {
     if a == 0.0 {
         return ENTALPHA_DEFAULT;
     }
-    return q_rint(clamp(a * 254.0 + 1.0, 1.0, 255.0));
+    q_rint(clamp(a * 254.0 + 1.0, 1.0, 255.0))
 }
 
 /// Formerly: ENTALPHA_DECODE
@@ -215,7 +215,7 @@ pub fn ent_alpha_decode(a: u32) -> f32 {
     if a == ENTALPHA_DEFAULT {
         return 1.0;
     }
-    return ((a as f32) - 1.0) / 254.0;
+    ((a as f32) - 1.0) / 254.0
 }
 
 /// Formerly: ENTALPHA_TOSAVE
@@ -226,7 +226,7 @@ pub fn ent_alpha_to_save(a: u32) -> f32 {
     } else if a == ENTALPHA_ZERO {
         return -1.0;
     }
-    return ((a as f32) - 1.0) / 254.0;
+    ((a as f32) - 1.0) / 254.0
 }
 
 /// defaults for clientinfo messages
