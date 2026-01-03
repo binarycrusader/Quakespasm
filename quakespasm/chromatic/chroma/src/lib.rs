@@ -62,7 +62,9 @@ pub mod spritegn;
 pub mod strl;
 pub use strl::capi::*;
 
+#[cfg(windows)]
 pub mod sys_sdl_win;
+#[cfg(windows)]
 pub use sys_sdl_win::capi::*;
 
 pub mod wad;
@@ -70,7 +72,9 @@ pub use wad::capi::*;
 
 pub mod vid;
 
+mod quakedef;
 pub mod zone;
+
 pub use zone::capi::*;
 
 use std::ops::Not;
@@ -87,6 +91,13 @@ pub enum QBoolean {
 impl QBoolean {
     pub const fn default() -> Self {
         QBoolean::False
+    }
+
+    pub const fn as_bool(self) -> bool {
+        match self {
+            QBoolean::False => false,
+            QBoolean::True => true,
+        }
     }
 }
 
@@ -106,12 +117,9 @@ impl From<bool> for QBoolean {
     }
 }
 
-impl Into<bool> for QBoolean {
-    fn into(self) -> bool {
-        match self {
-            QBoolean::False => false,
-            QBoolean::True => true,
-        }
+impl From<QBoolean> for bool {
+    fn from(q: QBoolean) -> bool {
+        q.as_bool()
     }
 }
 
@@ -128,10 +136,7 @@ impl Not for QBoolean {
 
 impl PartialEq<bool> for QBoolean {
     fn eq(&self, other: &bool) -> bool {
-        match self {
-            QBoolean::True => other == &true,
-            QBoolean::False => other == &false,
-        }
+        self.as_bool() == *other
     }
 }
 

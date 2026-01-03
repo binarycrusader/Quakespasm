@@ -20,9 +20,10 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
-
+use std::ffi::CString;
 use std::fs::File;
 use std::io::{Seek, SeekFrom};
+use std::sync::OnceLock;
 
 thread_local! {
     // A crude abstraction to allow callers to operate on files without needing to manage underlying
@@ -52,17 +53,29 @@ fn remaining_filelength(file: &mut File) -> std::io::Result<u64> {
     Ok(end_pos - cur_pos)
 }
 
+static CWD: OnceLock<CString> = OnceLock::new();
+
 pub mod capi {
+    use super::CWD;
     use super::{next_unused_handle, remaining_filelength, SYS_HANDLES};
     use crate::cvar::{CVarFlags, CVarT};
+    use crate::host::capi::host_parms;
     use crate::{
         global_sdl_audio_context, global_sdl_context, global_sdl_controller_context,
         global_sdl_timer_context, global_sdl_video_context, QBoolean,
     };
+    use std::env;
+    use std::ffi::CString;
     use std::fs::File;
     use std::io::{Read, Seek, SeekFrom, Write};
     use std::os::raw::{c_char, c_double, c_int, c_ulong, c_void};
     use std::ptr::null_mut;
+    use windows::core::BOOL;
+    use windows::Wdk::System::SystemServices::RtlGetVersion;
+    use windows::Win32::Foundation::HANDLE;
+    use windows::Win32::Media::timeBeginPeriod;
+    use windows::Win32::System::Console::GetStdHandle;
+    use windows::Win32::System::SystemInformation::{GetSystemInfo, OSVERSIONINFOEXW, SYSTEM_INFO};
 
     #[unsafe(no_mangle)]
     pub static mut isDedicated: QBoolean = QBoolean::False;
@@ -79,6 +92,11 @@ pub mod capi {
     }; // seconds
 
     #[unsafe(no_mangle)]
+    pub static mut hinput: HANDLE = HANDLE(null_mut());
+    #[unsafe(no_mangle)]
+    pub static mut houtput: HANDLE = HANDLE(null_mut());
+
+    #[unsafe(no_mangle)]
     pub extern "C" fn Sys_AtExit() {
         // IOU: Attempts to use global sdl_context objects will fail after this. Need a cleaner way
         // to manage globals.
@@ -93,6 +111,9 @@ pub mod capi {
         // N.B. quakespasm 0.96.3+ removed the SDL Version checks that were here. Currently, SDL
         // 2.26.x+ is required, but the latest stable 2.x version should work. SDL3 has since
         // replaced SDL2, but this project isn't ready for that yet.
+
+        // Hints must be set *before* SDL is initialized.
+        sdl2::hint::set("SDL_WINDOWS_DPI_AWARENESS", "permonitorv2");
 
         // Global lazy statics are initialized on first deref; do so in required order.
         let _init_sdl_context = &*global_sdl_context;
@@ -241,6 +262,166 @@ pub mod capi {
                     -1
                 }
             })
+    }
+
+    // Historically, this would write the current directory to dst, but QuakeSpasm only ever called
+    // it to initialize a global cwd variable once during Sys_Init() and never used it after. To
+    // avoid unsafe code, this instead sets a global CWD that can be referred to directly by rust
+    // callers safely allowing C callers to orchestrate the initialization but not the allocation or
+    // lifetime.
+    #[unsafe(no_mangle)]
+    pub extern "C" fn Sys_GetBaseDir(
+        _argv0: *const c_char,
+        _dst: *mut c_char,
+        _dstsize: libc::size_t,
+    ) {
+        let result = (|| -> Result<(), ()> {
+            let path = env::current_dir().map_err(|_| ())?;
+            let path_str = path.to_str().ok_or(())?;
+            let npath = if !path.has_root() || path.parent().is_some() {
+                path_str.trim_end_matches(['/', '\\'])
+            } else {
+                path_str
+            };
+            let ncwd = CString::new(npath).map_err(|_| ())?;
+            CWD.set(ncwd).map_err(|_| ())
+        })();
+
+        if result.is_err() {
+            // TODO: Sys_Error ("Couldn't determine current directory");
+        }
+    }
+
+    extern "C" {
+        fn AllocConsole() -> BOOL;
+    }
+
+    #[unsafe(no_mangle)]
+    pub extern "C" fn Sys_Init() {
+        // Set OS timer resolution to 1ms:
+        // Works around buffer underruns with directsound and SDL2, but also will make Sleep() /
+        // SDL_Delay() accurate to 1ms which should help framerate stability.
+        unsafe {
+            timeBeginPeriod(1);
+        }
+
+        Sys_GetBaseDir(null_mut(), null_mut(), 0); // Populate CWD
+        match CWD.get() {
+            Some(cwd) => unsafe {
+                (*host_parms).basedir = cwd.as_ptr();
+            },
+            None => {
+                // TODO: Sys_Error("Couldn't determine basedir");
+            }
+        };
+
+        // userdirs not really necessary for windows guys;  can be done if necessary, though...
+        unsafe {
+            (*host_parms).userdir = (*host_parms).basedir; // code elsewhere relies on this !
+        }
+
+        let mut osvi = OSVERSIONINFOEXW {
+            dwOSVersionInfoSize: size_of::<OSVERSIONINFOEXW>() as u32,
+            ..Default::default()
+        };
+
+        unsafe {
+            if RtlGetVersion(&mut osvi as *mut _ as *mut _).is_err() {
+                // TODO: Sys_Error ("Couldn't get OS info");
+            }
+        }
+
+        if (osvi.dwMajorVersion < 4)
+            || (osvi.dwPlatformId
+                == windows::Win32::System::Diagnostics::Debug::VER_PLATFORM_WIN32s.0)
+        {
+            // TODO: Sys_Error ("QuakeSpasm requires at least Win95 or NT 4.0");
+        }
+
+        if osvi.dwPlatformId == windows::Win32::System::Diagnostics::Debug::VER_PLATFORM_WIN32_NT.0
+        {
+            let mut ossi = SYSTEM_INFO {
+                ..Default::default()
+            };
+            unsafe {
+                GetSystemInfo(&mut ossi as *mut _ as *mut _);
+                (*host_parms).numcpus = if ossi.dwNumberOfProcessors >= 1 {
+                    ossi.dwNumberOfProcessors as c_int
+                } else {
+                    1
+                };
+            };
+        } else {
+            // Win95: Win9x or WinME
+            unsafe {
+                (*host_parms).numcpus = 1;
+            };
+        }
+        // TODO: Sys_Printf("Detected %d CPUs.\n", host_parms->numcpus);
+
+        unsafe {
+            if isDedicated.as_bool() {
+                if !AllocConsole().as_bool() {
+                    isDedicated = QBoolean::False; // ensure graphical error dialog exists
+                                                   // TODO: Sys_Error ("Couldn't create dedicated server console");
+                }
+
+                if let Ok(h) = GetStdHandle(windows::Win32::System::Console::STD_INPUT_HANDLE) {
+                    hinput = h;
+                } else {
+                    // TODO: Sys_Error ("Couldn't create dedicated server console");
+                }
+
+                if let Ok(h) = GetStdHandle(windows::Win32::System::Console::STD_OUTPUT_HANDLE) {
+                    houtput = h;
+                } else {
+                    // TODO: Sys_Error ("Couldn't create dedicated server console");
+                }
+            }
+        }
+    }
+
+    #[unsafe(no_mangle)]
+    pub extern "C" fn Sys_mkdir(path: *const c_char) {
+        if path.is_null() {
+            return; // TODO: Sys_Printf("Unable to create directory");
+        }
+
+        let result = (|| -> Result<(), ()> {
+            let fspath = unsafe { std::ffi::CStr::from_ptr(path) }
+                .to_str()
+                .map_err(|_| ())?;
+            std::fs::create_dir(fspath)
+                .or_else(|e| if e.kind() == std::io::ErrorKind::AlreadyExists {
+                    // TODO: Sys_Printf("Directory already exists"); ?
+                    Ok(())
+                } else {
+                    Err(())
+                })?;
+
+            Ok(())
+        })();
+
+        if result.is_err() {
+            // TODO: Sys_Printf("Unable to create directory");
+        }
+    }
+
+    extern "C" {
+        fn Host_Shutdown();
+        fn FreeConsole();
+    }
+
+    #[unsafe(no_mangle)]
+    pub extern "C" fn Sys_Quit() {
+        unsafe {
+            Host_Shutdown();
+
+            if isDedicated.as_bool() {
+                FreeConsole();
+            }
+        }
+        std::process::exit(0);
     }
 
     #[unsafe(no_mangle)]

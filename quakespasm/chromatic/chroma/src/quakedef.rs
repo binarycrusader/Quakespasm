@@ -2,7 +2,7 @@
 Copyright (C) 1996-2001 Id Software, Inc.
 Copyright (C) 2002-2009 John Fitzgibbons and others
 Copyright (C) 2007-2008 Kristian Duske
-Copyright (C) 2010-2014 QuakeSpasm developers
+Copyright (C) 2010-2019 QuakeSpasm developers
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -20,23 +20,22 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
-// host.rs -- coordinates spawning and killing of local servers
 
-/*
+// quakedef.rs -- primary definitions for client
 
-A server can allways be started, even if the system started out as a client
-to a remote system.
+use std::os::raw::{c_char, c_int, c_void};
 
-A client can NOT be started if the system started as a dedicated server.
-
-Memory is cleared / released when a server or client begins, not when they end.
-
-*/
-
-pub mod capi {
-    use crate::QuakeParmsT;
-    use std::ptr::null_mut;
-
-    #[unsafe(no_mangle)]
-    pub static mut host_parms: *mut QuakeParmsT = null_mut();
+#[derive(Clone, Copy, Default)]
+#[repr(C)]
+pub struct QuakeParmsT {
+    pub basedir: *const c_char,
+    // user's directory on UNIX platforms; if user directories are enabled, basedir and userdir will
+    // point to different memory locations, otherwise to the same.
+    pub userdir: *const c_char,
+    pub argc: c_int,
+    pub argv: *const *const c_char,
+    pub membase: *mut c_void,
+    pub memsize: *mut c_int,
+    pub numcpus: *mut c_int,
+    pub errstate: *mut c_int,
 }
