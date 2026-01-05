@@ -20,9 +20,13 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
+use crate::host::capi::host_parms;
+use crate::{global_sdl_timer_context, isDedicated};
 use std::ffi::CString;
 use std::fs::File;
+use std::io::Write;
 use std::io::{Seek, SeekFrom};
+use std::os::raw::c_char;
 use std::sync::OnceLock;
 
 thread_local! {
@@ -53,11 +57,73 @@ fn remaining_filelength(file: &mut File) -> std::io::Result<u64> {
     Ok(end_pos - cur_pos)
 }
 
+static ERRORTXT1: &str = "\nERROR-OUT BEGIN\n\n";
+static ERRORTXT2: &str = "\nQUAKE ERROR: ";
+
+extern "C" {
+    fn Host_Shutdown();
+    fn PL_ErrorDialog(errorMsg: *const c_char);
+}
+
+#[cold]
+pub fn sys_quit_with_error(err: impl Into<anyhow::Error>) -> ! {
+    unsafe {
+        (*host_parms).errstate += 1;
+    }
+
+    let is_dedicated = unsafe { isDedicated.as_bool() };
+
+    let err = err.into();
+    let text = err.to_string();
+    if is_dedicated {
+        print!("{}", text);
+    }
+    // SDL will put these into its own stderr log so print to stderr even in graphical mode.
+    eprint!("{}", ERRORTXT1);
+    unsafe {
+        Host_Shutdown();
+    }
+    eprint!("{}{}\n\n", ERRORTXT2, text);
+
+    if is_dedicated {
+        print!("{}{}\r\n", ERRORTXT2, text);
+        // Ensure console output is flushed so the user can see the error before sleep or exit.
+        let _ = std::io::stdout().flush();
+        let _ = std::io::stderr().flush();
+
+        global_sdl_timer_context.delay(3000); // show the console 3 more seconds
+    } else {
+        // Ensure console output is flushed before exiting and before showing the dialog.
+        let _ = std::io::stdout().flush();
+        let _ = std::io::stderr().flush();
+
+        // Showing the dialog is best-effort.
+        if let Ok(ctext) = CString::new(text) {
+            unsafe {
+                PL_ErrorDialog(ctext.as_ptr());
+            }
+        }
+    }
+
+    std::process::exit(1);
+}
+
+pub fn sys_log_info(txt: &str) {
+    print!("{}", txt);
+}
+
+pub fn sys_log_error(err: impl Into<anyhow::Error>) {
+    let err = err.into();
+    let text = err.to_string();
+
+    eprint!("{}", text);
+}
+
 static CWD: OnceLock<CString> = OnceLock::new();
 
 pub mod capi {
-    use super::CWD;
-    use super::{next_unused_handle, remaining_filelength, SYS_HANDLES};
+    use super::{next_unused_handle, remaining_filelength, sys_log_info, SYS_HANDLES};
+    use super::{sys_quit_with_error, CWD};
     use crate::cvar::{CVarFlags, CVarT};
     use crate::host::capi::host_parms;
     use crate::{
@@ -70,11 +136,10 @@ pub mod capi {
     use std::io::{Read, Seek, SeekFrom, Write};
     use std::os::raw::{c_char, c_double, c_int, c_ulong, c_void};
     use std::ptr::null_mut;
-    use windows::core::BOOL;
     use windows::Wdk::System::SystemServices::RtlGetVersion;
     use windows::Win32::Foundation::HANDLE;
     use windows::Win32::Media::timeBeginPeriod;
-    use windows::Win32::System::Console::GetStdHandle;
+    use windows::Win32::System::Console::{AllocConsole, GetStdHandle};
     use windows::Win32::System::SystemInformation::{GetSystemInfo, OSVERSIONINFOEXW, SYSTEM_INFO};
 
     #[unsafe(no_mangle)]
@@ -98,16 +163,18 @@ pub mod capi {
 
     #[unsafe(no_mangle)]
     pub extern "C" fn Sys_AtExit() {
-        // IOU: Attempts to use global sdl_context objects will fail after this. Need a cleaner way
-        // to manage globals.
         unsafe { sdl2::sys::SDL_Quit() };
     }
 
     #[unsafe(no_mangle)]
     pub extern "C" fn Sys_InitSDL() {
-        //let sdl_version = sdl2::version::version();
-
-        //Sys_Printf("Found SDL version %i.%i.%i\n",sdl_version->major,sdl_version->minor,sdl_version->patch);
+        {
+            let version = sdl2::version::version();
+            sys_log_info(&format!(
+                "Found SDL version {}.{}.{}\n",
+                version.major, version.minor, version.patch
+            ));
+        }
         // N.B. quakespasm 0.96.3+ removed the SDL Version checks that were here. Currently, SDL
         // 2.26.x+ is required, but the latest stable 2.x version should work. SDL3 has since
         // replaced SDL2, but this project isn't ready for that yet.
@@ -162,17 +229,17 @@ pub mod capi {
 
     #[unsafe(no_mangle)]
     pub extern "C" fn Sys_FileOpenWrite(path: *const c_char) -> c_int {
-        if path.is_null() {
-            return -1;
-        }
+        let result = (|| -> anyhow::Result<c_int> {
+            anyhow::ensure!(
+                !path.is_null(),
+                "Unable to open file for write; no path specified"
+            );
+            let next_idx = next_unused_handle().map_err(|e| anyhow::anyhow!(e))?;
 
-        let result = (|| -> Result<c_int, ()> {
-            let next_idx = next_unused_handle().map_err(|_| ())?;
             let fspath = unsafe { std::ffi::CStr::from_ptr(path) }
                 .to_str()
-                .map_err(|_| ())?;
-            // TODO: Sys_Error("Error opening %s: %s", path, strerror(errno)); if this fails.
-            let f = File::create(fspath).map_err(|_| ())?;
+                .map_err(|e| anyhow::anyhow!(e))?;
+            let f = File::create(fspath).map_err(|e| anyhow::anyhow!(e))?;
 
             SYS_HANDLES.with(|handles_cell| {
                 handles_cell.borrow_mut()[next_idx] = Some(f);
@@ -181,7 +248,12 @@ pub mod capi {
             Ok(next_idx as c_int)
         })();
 
-        result.unwrap_or(-1)
+        match result {
+            Ok(hidx) => hidx,
+            Err(err) => {
+                sys_quit_with_error(anyhow::anyhow!(err));
+            }
+        }
     }
 
     #[unsafe(no_mangle)]
@@ -275,25 +347,24 @@ pub mod capi {
         _dst: *mut c_char,
         _dstsize: libc::size_t,
     ) {
-        let result = (|| -> Result<(), ()> {
-            let path = env::current_dir().map_err(|_| ())?;
-            let path_str = path.to_str().ok_or(())?;
+        let result = (|| -> anyhow::Result<()> {
+            let path = env::current_dir()?;
+            let path_str = path
+                .to_str()
+                .ok_or_else(|| anyhow::anyhow!("current directory path is not valid UTF-8"))?;
             let npath = if !path.has_root() || path.parent().is_some() {
                 path_str.trim_end_matches(['/', '\\'])
             } else {
                 path_str
             };
-            let ncwd = CString::new(npath).map_err(|_| ())?;
-            CWD.set(ncwd).map_err(|_| ())
+            let ncwd = CString::new(npath)?;
+            CWD.set(ncwd)
+                .map_err(|_| anyhow::anyhow!("CWD already set"))
         })();
 
-        if result.is_err() {
-            // TODO: Sys_Error ("Couldn't determine current directory");
+        if let Err(err) = result {
+            sys_quit_with_error(err);
         }
-    }
-
-    extern "C" {
-        fn AllocConsole() -> BOOL;
     }
 
     #[unsafe(no_mangle)]
@@ -311,7 +382,7 @@ pub mod capi {
                 (*host_parms).basedir = cwd.as_ptr();
             },
             None => {
-                // TODO: Sys_Error("Couldn't determine basedir");
+                sys_quit_with_error(anyhow::anyhow!("Couldn't determine basedir"));
             }
         };
 
@@ -327,7 +398,7 @@ pub mod capi {
 
         unsafe {
             if RtlGetVersion(&mut osvi as *mut _ as *mut _).is_err() {
-                // TODO: Sys_Error ("Couldn't get OS info");
+                sys_quit_with_error(anyhow::anyhow!("Couldn't get OS info"));
             }
         }
 
@@ -335,7 +406,9 @@ pub mod capi {
             || (osvi.dwPlatformId
                 == windows::Win32::System::Diagnostics::Debug::VER_PLATFORM_WIN32s.0)
         {
-            // TODO: Sys_Error ("QuakeSpasm requires at least Win95 or NT 4.0");
+            sys_quit_with_error(anyhow::anyhow!(
+                "QuakeSpasm requires at least Win95 or NT 4.0"
+            ));
         }
 
         if osvi.dwPlatformId == windows::Win32::System::Diagnostics::Debug::VER_PLATFORM_WIN32_NT.0
@@ -357,25 +430,34 @@ pub mod capi {
                 (*host_parms).numcpus = 1;
             };
         }
-        // TODO: Sys_Printf("Detected %d CPUs.\n", host_parms->numcpus);
+        sys_log_info(&format!("Detected {} CPU(s).\n", unsafe {
+            (*host_parms).numcpus
+        }));
 
         unsafe {
             if isDedicated.as_bool() {
-                if !AllocConsole().as_bool() {
+                if let Err(err) = AllocConsole() {
                     isDedicated = QBoolean::False; // ensure graphical error dialog exists
-                                                   // TODO: Sys_Error ("Couldn't create dedicated server console");
+                    sys_quit_with_error(anyhow::anyhow!(
+                        "Couldn't create dedicated server console: {}",
+                        err
+                    ));
                 }
 
                 if let Ok(h) = GetStdHandle(windows::Win32::System::Console::STD_INPUT_HANDLE) {
                     hinput = h;
                 } else {
-                    // TODO: Sys_Error ("Couldn't create dedicated server console");
+                    sys_quit_with_error(anyhow::anyhow!(
+                        "Couldn't initialize server console stdin"
+                    ));
                 }
 
                 if let Ok(h) = GetStdHandle(windows::Win32::System::Console::STD_OUTPUT_HANDLE) {
                     houtput = h;
                 } else {
-                    // TODO: Sys_Error ("Couldn't create dedicated server console");
+                    sys_quit_with_error(anyhow::anyhow!(
+                        "Couldn't intialize server console stdout"
+                    ));
                 }
             }
         }
@@ -383,27 +465,24 @@ pub mod capi {
 
     #[unsafe(no_mangle)]
     pub extern "C" fn Sys_mkdir(path: *const c_char) {
-        if path.is_null() {
-            return; // TODO: Sys_Printf("Unable to create directory");
-        }
-
-        let result = (|| -> Result<(), ()> {
-            let fspath = unsafe { std::ffi::CStr::from_ptr(path) }
-                .to_str()
-                .map_err(|_| ())?;
-            std::fs::create_dir(fspath)
-                .or_else(|e| if e.kind() == std::io::ErrorKind::AlreadyExists {
-                    // TODO: Sys_Printf("Directory already exists"); ?
+        let result = (|| -> anyhow::Result<()> {
+            anyhow::ensure!(
+                !path.is_null(),
+                "Unable to create directory; no path specified"
+            );
+            let fspath = unsafe { std::ffi::CStr::from_ptr(path) }.to_str()?;
+            std::fs::create_dir(fspath).or_else(|e| {
+                if matches!(e.kind(), std::io::ErrorKind::AlreadyExists) {
                     Ok(())
                 } else {
-                    Err(())
-                })?;
-
+                    Err(e)
+                }
+            })?;
             Ok(())
         })();
 
-        if result.is_err() {
-            // TODO: Sys_Printf("Unable to create directory");
+        if let Err(err) = result {
+            sys_quit_with_error(err);
         }
     }
 

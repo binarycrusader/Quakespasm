@@ -72,7 +72,6 @@ pub use wad::capi::*;
 
 pub mod vid;
 
-mod quakedef;
 pub mod zone;
 
 pub use zone::capi::*;
@@ -314,13 +313,12 @@ pub const HIT_EMPATHY_SHIELDS: u32 = 1 << (23 + 3);
 pub const MAX_SCOREBOARD: usize = 16;
 pub const MAX_SCOREBOARDNAME: usize = 32;
 
+#[derive(Clone, Copy, Default)]
 #[repr(C)]
 pub struct QuakeParmsT {
     pub basedir: *const c_char,
-    /// user's directory on UNIX platforms
-    /// if user directories are enabled, basedir
-    /// and userdir will point to different
-    /// memory locations, otherwise to the same.
+    /// user's directory on UNIX platforms; if user directories are enabled, basedir and userdir
+    /// will point to different memory locations, otherwise to the same.
     pub userdir: *const c_char,
     pub argc: c_int,
     pub argv: *mut *mut c_char,
